@@ -1,0 +1,14 @@
+Package: RenDate
+Title: Compute densities from calibrated curves with a mesure and an error
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Philippe", 
+           family = "Dufresne",
+           role = c("aut", "cre"),
+           email = "philippe.dufresne@univ-rennes1.fr",
+           comment = c(ORCID = "orcid.org/0000-0002-5799-5681"))
+Description: Tools to manage and compute date probability from mesure and calibration curves.
+License: Creative Commons Attribution-ShareAlike International License
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.0.2
