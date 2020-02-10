@@ -119,7 +119,7 @@ calibrate <- function (mesures, std, calCurves, ids = NULL, positions = NULL,   
 #' Calcul le hdr (hpd) sur une densité de probabilité de date
 #' @param prob surface [0, 1]
 #' @export
-RenDate.hdr = function(date, prob = 0.95) 
+hdr.RenDate = function(date, prob = 0.95) 
 {
   
   # A function to return the HPD interval for a date object which should have an ageGrid and a densities argument
@@ -164,7 +164,7 @@ RenDate.hdr = function(date, prob = 0.95)
 #' @param withHDR Calcul le hdr (hpd) et remplie la surface correspondant
 #' @param dateHeigth Fixe la hauteur des densités
 #' @export
-RenDate.plot <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 30, borderCol = NULL,
+plot.RenDate <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 30, borderCol = NULL,
                          fillCols = rep('gray', length(x)), withHDR = TRUE, hdrCol = 'darkgray',
                          ...) 
 {
@@ -188,7 +188,7 @@ RenDate.plot <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 3
     do.call("plot", args)
     #graphics::mtext(paste(x[[1]]$calCurves),side=1,line=4,adj=0,cex=0.6)
     if(withHDR) {
-      my_hdr = RenDate.hdr(x[[1]])
+      my_hdr = hdr.RenDate(x[[1]])
       for(j in 1:length(my_hdr)) {
         x_seq = seq(my_hdr[[j]][1], my_hdr[[j]][2], by = 1)
         y_lookup = match(x_seq, ag)
@@ -217,7 +217,7 @@ RenDate.plot <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 3
       do.call("plot", args)
       # graphics::mtext(paste(x[[i]]$calCurves),side=1,line=4,adj=0,cex=0.6)
       if(withHDR) {
-        my_hdr = RenDate.hdr(x[[i]])
+        my_hdr = hdr.RenDate(x[[i]])
         for(j in 1:length(my_hdr)) {
           x_seq = seq(my_hdr[[j]][1], my_hdr[[j]][2], by = 1)
           y_lookup = match(x_seq, ag)
@@ -266,7 +266,7 @@ RenDate.plot <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 3
 #' Trace des courbes de densité avec leurs enveloppes d erreur
 #' @param withHDR Calcul le hdr (hdp) et remplie la surface correspondant
 #' @export
-RenDate.lines <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, borderCol = NULL,
+lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, borderCol = NULL,
                           fillCols = rep('gray', length(x)), withHDR = TRUE, hdrCol = 'darkgray', 
                           ...) 
 {
@@ -289,7 +289,7 @@ RenDate.lines <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, 
     do.call("lines", args)
     #graphics::mtext(paste(x[[1]]$calCurves),side=1,line=4,adj=0,cex=0.6)
     if(withHDR) {
-      my_hdr = RenDate.hdr(x[[1]])
+      my_hdr = hdr.RenDate(x[[1]])
       for(j in 1:length(my_hdr)) {
         x_seq = seq(my_hdr[[j]][1], my_hdr[[j]][2], by = 1)
         y_lookup = match(x_seq, ag)
@@ -317,7 +317,7 @@ RenDate.lines <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, 
       do.call("lines", args)
       # graphics::mtext(paste(x[[i]]$calCurves),side=1,line=4,adj=0,cex=0.6)
       if(withHDR) {
-        my_hdr = RenDate.hdr(x[[i]])
+        my_hdr = hdr.RenDate(x[[i]])
         for(j in 1:length(my_hdr)) {
           x_seq = seq(my_hdr[[j]][1], my_hdr[[j]][2], by = 1)
           y_lookup = match(x_seq, ag)
@@ -387,7 +387,7 @@ courbe.enveloppe <- function(t, mean, std, col.env = "forestgreen",  xlim = NULL
 #' Calcul la combinaison au sens produit de deux densités
 #' @param timeScale permet de modifier la grille de temps
 #' @export
-RenDate.produit <- function(date1, date2, timeScale = 1)
+produit.RenDate <- function(date1, date2, timeScale = 1)
 {
   cal_range_i = range(date1[[1]]$timeGrid)
   cal_range_d = range(date2[[1]]$timeGrid)
