@@ -280,7 +280,7 @@ RenDate.lines <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, 
   # First plot for individual dates
   if(length(x)==1) {
     ag = x[[1]]$timeGrid
-    den = x[[1]]$densities
+    den = x[[1]]$densities / x[[1]]$timeScale
     ex$x = ag
     ex$y = den
     ex$type = 'l'
@@ -308,7 +308,7 @@ RenDate.lines <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, 
     for(i in 1:length(x)) {
       ex_curr = ex
       ag = x[[i]]$timeGrid
-      den = x[[i]]$densities
+      den = x[[i]]$densities / x[[i]]$timeScale
       ex_curr$x = ag
       ex_curr$y = den
       ex_curr$type = 'l'
