@@ -131,15 +131,15 @@ calibrate <- function (mesures, std, calCurves, ids = NULL, positions = NULL,   
 #' @param date densité produite par la fonction calibrate, génértant un objet de class "RenDate" 
 #' @param prob requested surface value [0, 1]
 #' @export
-setGeneric("hpd", package = "RenDate", valueClass = "RenDate",
+setGeneric("hpd", package = "RenDate", valueClass = "List",
  function(date, prob = 0.95) 
 {
   
   # A function to return the HPD interval for a date object which should have an timeGrid and a densities argument
   # I was previously using the hdrcde package but this has several unnecessary dependencies
   
-  ag = date$timeGrid
-  de = date$densities
+  ag <- date$timeGrid
+  de <- date$densities
   stp <- date$timeScale
 
   # Error checking
