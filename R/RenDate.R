@@ -22,6 +22,9 @@
 #' @name RenDate
 #' @docType package
 
+#' Stocke une courbe dans le répertoire / data
+#' Cette fonction est utilisée avec la fonction calibrate
+#' @seealso \cite{\code{calibrate} }
 #' @export
 createCalCurve = function(name,
                           cal_ages,
@@ -47,7 +50,7 @@ createCalCurve = function(name,
   cat('Completed!\n')
 }
 
-# Il faut dégrader la fonction BchronCalibrate pour autoriser le passage de valeurs décimales, il faut aussi corriger la formule
+# Il faut dégrader la fonction BchronCalibrate pour autoriser le passage de valeurs décimales. Il faut aussi corriger la formule
 
 #' Fonction qui permet le calcul de la densité de probabilté d'une date
 #' @param mesures mesure ou liste des mesures à calibrer
@@ -57,7 +60,7 @@ createCalCurve = function(name,
 calibrate <- function (mesures, std, calCurves, ids = NULL, positions = NULL,   pathToCalCurves = paste0(getwd(),'/','data'),  timeScale = 1  ) 
 {
   if (length(mesures) != length(std)) 
-    stop("ages and std should be of same length")
+    stop("mesures and std should be of same length")
   
   if (length(mesures) != length(calCurves)) 
     stop("mesures and calCurves should be of same length")
