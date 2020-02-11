@@ -13,7 +13,14 @@
 # Version 2020-02-07
 #
 
+#' RenDate; inspiré du package Bchron (https://cran.r-project.org/web/packages/Bchron/index.html) développé par Andrew Parnell <Andrew.Parnell at mu.ie>, 
+#' ( Haslett J, Parnell AC (2008). “A simple monotone process with application to radiocarbon-dated depth chronologies.” 
+#' Journal of the Royal Statistical Society: Series C (Applied Statistics), 57(4), 399–418.
+#'  http://onlinelibrary.wiley.com/doi/10.1111/j.1467-9876.2008.00623.x/full. )
+#' est modifié pour pouvoir l'utiliser avec des mesures magnétiques, ou d'autres sortes de mesures nécessitants des valeurs décimales
 #' @author "Philippe DUFRESNE"
+#' @name RenDate
+#' @docType package
 
 #' @export
 createCalCurve = function(name,
@@ -41,6 +48,7 @@ createCalCurve = function(name,
 }
 
 # Il faut dégrader la fonction BchronCalibrate pour autoriser le passage de valeurs décimales, il faut aussi corriger la formule
+
 #' Fonction qui permet le calcul de la densité de probabilté d'une date
 #' @param mesures mesure ou liste des mesures à calibrer
 #' @param std erreur ou liste des erreurs sur les mesures à calibrer
@@ -116,10 +124,12 @@ calibrate <- function (mesures, std, calCurves, ids = NULL, positions = NULL,   
   return(out)
 }
 
-#' Calcul le hdr (hpd) sur une densité de probabilité de date
-#' @param prob surface [0, 1]
+#' Calcul le hpd (hdr) sur une densité de probabilité de date
+#' @param date densité produite par la fonction calibrate, génértant un objet de class"RenDate" 
+#' @param prob requested surface value [0, 1]
 #' @export
-hdr.RenDate = function(date, prob = 0.95) 
+setGeneric("hpd", 
+ function(date, prob = 0.95) 
 {
   
   # A function to return the HPD interval for a date object which should have an ageGrid and a densities argument
@@ -151,7 +161,7 @@ hdr.RenDate = function(date, prob = 0.95)
   high_seq = ifelse(length(where_breaks)==0, length(breaks), where_breaks[1])
   for(i in 1:n_breaks) {
     out[[i]] = c(good_ag[low_seq], good_ag[high_seq])
-    curr_dens = round(100*sum(de[o][seq(good_cu[low_seq], good_cu[high_seq])]),1)
+    curr_dens = round(100*sum(de[o][seq(good_cu[low_seq], good_cu[high_seq])]), 1)
     names(out)[[i]] = paste0(as.character(curr_dens),'%')
     low_seq = high_seq + 1
     high_seq = ifelse(i<n_breaks-1, where_breaks[i+1], length(breaks))
@@ -159,26 +169,34 @@ hdr.RenDate = function(date, prob = 0.95)
   return(out)
   
 }
+)
 
 #' Trace des courbe de densité
 #' @param withHDR Calcul le hdr (hpd) et remplie la surface correspondant
-#' @param dateHeigth Fixe la hauteur des densités
+#' @param dateHeigth Fixe la hauteur des densités, quand withPositions est TRUE
+#' @param normalize force le maximum à la valeur 1
 #' @export
-plot.RenDate <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 30, borderCol = NULL,
+plot.RenDate <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 30, normalize= FALSE, borderCol = NULL,
                          fillCols = rep('gray', length(x)), withHDR = TRUE, hdrCol = 'darkgray',
                          ...) 
 {
   
   # Get extra arguments if provided
-  ex = list(...)#as.list(substitute(list(...)))[-1L]
+  ex = list(...)
   
   if(is.null(ex$xlab)) ex$xlab = 'Date'
   if(is.null(ex$ylab)) ex$ylab = ifelse(withPositions,'Position','Density')
   
   # First plot for individual dates
   if(length(x)==1) {
+    if(normalize == TRUE) 
+    {
+      fac <- max(x[[1]]$densities)
+    } else {
+      fac <- x[[1]]$timeScale
+    }
     ag = x[[1]]$timeGrid
-    den = x[[1]]$densities / x[[1]]$timeScale
+    den = x[[1]]$densities / fac
     ex$x = ag
     ex$y = den
     ex$type = 'l'
@@ -188,11 +206,14 @@ plot.RenDate <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 3
     do.call("plot", args)
     #graphics::mtext(paste(x[[1]]$calCurves),side=1,line=4,adj=0,cex=0.6)
     if(withHDR) {
-      my_hdr = hdr.RenDate(x[[1]])
+      my_hdr = hpd(x[[1]])
       for(j in 1:length(my_hdr)) {
-        x_seq = seq(my_hdr[[j]][1], my_hdr[[j]][2], by = 1)
-        y_lookup = match(x_seq, ag)
-        y_seq = den[y_lookup]
+        #x_seq = seq(my_hdr[[j]][1], my_hdr[[j]][2], by = 1)
+        #y_lookup = match(x_seq, ag)
+        #y_seq = den[y_lookup]
+        y_lookup <- match(my_hdr[[j]], ag)
+        x_seq <- ag[y_lookup[1]: y_lookup[2]]
+        y_seq = den[y_lookup[1]: y_lookup[2]]
         graphics::polygon(c(my_hdr[[j]][1], x_seq, my_hdr[[j]][2]),
                           c(0, y_seq, 0),
                           col = hdrCol,
@@ -205,9 +226,15 @@ plot.RenDate <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 3
   # Now for multiple dates without depths
   if(length(x)>1 & withPositions==FALSE) {
     for(i in 1:length(x)) {
+      if(normalize == TRUE) 
+      {
+        fac <- max(x[[i]]$densities)
+      } else {
+        fac <- x[[i]]$timeScale
+      }
       ex_curr = ex
       ag = x[[i]]$timeGrid
-      den = x[[i]]$densities / x[[i]]$timeScale
+      den = x[[i]]$densities / fac
       ex_curr$x = ag
       ex_curr$y = den
       ex_curr$type = 'l'
@@ -217,11 +244,15 @@ plot.RenDate <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 3
       do.call("plot", args)
       # graphics::mtext(paste(x[[i]]$calCurves),side=1,line=4,adj=0,cex=0.6)
       if(withHDR) {
-        my_hdr = hdr.RenDate(x[[i]])
+        my_hdr = hpd(x[[i]])
         for(j in 1:length(my_hdr)) {
-          x_seq = seq(my_hdr[[j]][1], my_hdr[[j]][2], by = 1)
-          y_lookup = match(x_seq, ag)
-          y_seq = den[y_lookup]
+          #x_seq = seq(my_hdr[[j]][1], my_hdr[[j]][2], by = 1)
+          #y_lookup = match(x_seq, ag)
+          #y_seq = den[y_lookup]
+          
+          y_lookup <- match(my_hdr[[j]], ag)
+          x_seq <- ag[y_lookup[1]: y_lookup[2]]
+          y_seq = den[y_lookup[1]: y_lookup[2]]
           graphics::polygon(c(my_hdr[[j]][1], x_seq, my_hdr[[j]][2]),
                             c(0, y_seq, 0),
                             col = hdrCol,
@@ -266,7 +297,7 @@ plot.RenDate <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 3
 #' Trace des courbes de densité avec leurs enveloppes d erreur
 #' @param withHDR Calcul le hdr (hdp) et remplie la surface correspondant
 #' @export
-lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, borderCol = NULL,
+lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, normalize = FALSE, borderCol = NULL,
                           fillCols = rep('gray', length(x)), withHDR = TRUE, hdrCol = 'darkgray', 
                           ...) 
 {
@@ -279,8 +310,14 @@ lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, 
   
   # First plot for individual dates
   if(length(x)==1) {
+    if(normalize == TRUE) 
+    {
+      fac <- max(x[[1]]$densities)
+    } else {
+      fac <- x[[1]]$timeScale
+    }
     ag = x[[1]]$timeGrid
-    den = x[[1]]$densities / x[[1]]$timeScale
+    den = x[[1]]$densities / fac
     ex$x = ag
     ex$y = den
     ex$type = 'l'
@@ -289,11 +326,14 @@ lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, 
     do.call("lines", args)
     #graphics::mtext(paste(x[[1]]$calCurves),side=1,line=4,adj=0,cex=0.6)
     if(withHDR) {
-      my_hdr = hdr.RenDate(x[[1]])
+      my_hdr = hpd(x[[1]])
       for(j in 1:length(my_hdr)) {
-        x_seq = seq(my_hdr[[j]][1], my_hdr[[j]][2], by = 1)
-        y_lookup = match(x_seq, ag)
-        y_seq = den[y_lookup]
+        #x_seq = seq(my_hdr[[j]][1], my_hdr[[j]][2], by = 1)
+        #y_lookup = match(x_seq, ag)
+        #y_seq = den[y_lookup]
+        y_lookup <- match(my_hdr[[j]], ag)
+        x_seq <- ag[y_lookup[1]: y_lookup[2]]
+        y_seq = den[y_lookup[1]: y_lookup[2]]
         graphics::polygon(c(my_hdr[[j]][1], x_seq, my_hdr[[j]][2]),
                           c(0, y_seq, 0),
                           col = hdrCol,
@@ -307,8 +347,14 @@ lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, 
   if(length(x)>1 & withPositions==FALSE) {
     for(i in 1:length(x)) {
       ex_curr = ex
+      if(normalize == TRUE) 
+      {
+        fac <- max(x[[i]]$densities)
+      } else {
+        fac <- x[[i]]$timeScale
+      }
       ag = x[[i]]$timeGrid
-      den = x[[i]]$densities / x[[i]]$timeScale
+      den = x[[i]]$densities / fac
       ex_curr$x = ag
       ex_curr$y = den
       ex_curr$type = 'l'
@@ -317,11 +363,14 @@ lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, 
       do.call("lines", args)
       # graphics::mtext(paste(x[[i]]$calCurves),side=1,line=4,adj=0,cex=0.6)
       if(withHDR) {
-        my_hdr = hdr.RenDate(x[[i]])
+        my_hdr = hpd(x[[i]])
         for(j in 1:length(my_hdr)) {
-          x_seq = seq(my_hdr[[j]][1], my_hdr[[j]][2], by = 1)
-          y_lookup = match(x_seq, ag)
-          y_seq = den[y_lookup]
+          #x_seq = seq(my_hdr[[j]][1], my_hdr[[j]][2], by = 1)
+          #y_lookup = match(x_seq, ag)
+          #y_seq = den[y_lookup]
+          y_lookup <- match(my_hdr[[j]], ag)
+          x_seq <- ag[y_lookup[1]: y_lookup[2]]
+          y_seq = den[y_lookup[1]: y_lookup[2]]
           graphics::polygon(c(my_hdr[[j]][1], x_seq, my_hdr[[j]][2]),
                             c(0, y_seq, 0),
                             col = hdrCol,
@@ -364,26 +413,45 @@ lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, 
 
 #' Trace une courbe avec son enveloppe d erreur à 1 sigma et deux sigma
 #' @export
-courbe.enveloppe <- function(t, mean, std, col.env = "forestgreen",  xlim = NULL, ylim = NULL, ...)
+courbe.enveloppe <- function(t, mean, std, col.env = "forestgreen",  xlim = NULL, ylim = NULL, new = TRUE,...)
 {
-  enveloppe1 <- mean + outer(std , c(1,-1))
+  enveloppe1 <- mean + outer(std , c(1, -1))
   
-  enveloppe2 <- mean + outer(std , c(2.54,-2.54)) 
+  enveloppe2 <- mean + outer(std , c(2.54, -2.54)) 
   
   if (is.null(ylim))
     ylim <- range(enveloppe2)
   
-  plot(
-    x=t, y=mean, type="l", ylim = ylim,
-    panel.first=polygon(c(t, rev(t)), c(enveloppe2[,1], rev(enveloppe2[,2])), border=NA, col=adjustcolor( col.env, alpha.f = 0.2)), xlim=xlim,  ...=... 
-  )
+  if(new == TRUE) {
+    plot(
+      x=t, y=mean, type="l", ylim = ylim,
+      panel.first=polygon(c(t, rev(t)), c(enveloppe2[,1], rev(enveloppe2[,2])), border=NA, col=adjustcolor( col.env, alpha.f = 0.2)), xlim=xlim,  ...=... 
+    )
+  } else {
+    lines(x = t , y=mean,
+          panel.first=polygon(c(t, rev(t)), c(enveloppe2[,1], rev(enveloppe2[,2])), border=NA, col=adjustcolor( col.env, alpha.f = 0.2))
+    )
+  }
+  
   
   lines(x = t , y=mean,
         panel.first=polygon(c(t, rev(t)), c(enveloppe1[,1], rev(enveloppe1[,2])), border=NA, col=adjustcolor( col.env, alpha.f = 0.3))
   )
   
 }
-
+#' Trace une roite représentant une mesure avec son enveloppe d erreur à 1 sigma et deux sigma
+#' @export
+mesure.enveloppe <- function(t, mesure, std, col.env = "gray",  col.mesure = "darkgray", ...)
+{
+  abline(h= mesure, col = col.mesure )
+ 
+ # text(t[1], mesure, labels=as.character(mesure) )
+  # enveloppe sur la mesure
+  polygon( c(t[1], t[1], t[length(t)], t[length(t)] ), c(mesure + 2.54*std, mesure - 2.54*std,  mesure - 2.54*std,  mesure + 2.54*std), border=NA, col=adjustcolor(col.env, alpha.f = 0.3))
+  polygon( c(t[1], t[1], t[length(t)], t[length(t)] ), c(mesure + std, mesure - std,  mesure - std,  mesure + std), border=NA, col=adjustcolor( col.env, alpha.f = 0.3))
+  
+  
+}
 #' Calcul la combinaison au sens produit de deux densités
 #' @param timeScale permet de modifier la grille de temps
 #' @export
