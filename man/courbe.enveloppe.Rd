@@ -11,6 +11,7 @@ courbe.enveloppe(
   col.env = "forestgreen",
   xlim = NULL,
   ylim = NULL,
+  new = TRUE,
   ...
 )
 }

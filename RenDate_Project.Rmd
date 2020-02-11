@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
  {install.packages("devtools")}
 
 devtools::install_github("chrono35/RenDate", force = TRUE)
-library("RenDate") #, lib.loc="/Library/Frameworks/R.framework/Versions/3.5/Resources/library")
+library("RenDate") #, lib.loc="/Library/Frameworks/R.framework/Versions/3.6/Resources/library")
 ```
 
 
@@ -103,7 +103,7 @@ hpd(date14C$C14, prob = .95)
 
 ## Datation AM
 ```{r Datation AM}
-IParis =70.8
+IParis = 70.8
 DParis = 6.8
 alpha95 = 1.38
 # conversion des erreurs
@@ -153,7 +153,7 @@ lines(dateDec1, col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f 
 # Combinaison AM
 
 ```{r produit AM}
-combiAM<- produit.RenDate(dateInc1, dateDec1, timeScale = 0.1)
+combiAM<- produit.RenDate(dateInc1, dateDec1, timeScale = 1)
 
 par(mfrow = c(2,1), mar=c(1, 5, 2, 0))
 
@@ -165,7 +165,7 @@ val.hdr <- paste(hpd(combiAM$Combinaison, prob = .95), ' à 95% BC/AD' )
 plot(combiAM, withHDR = TRUE, main='Combinaison' ,  normalize = TRUE, yaxt="n", xlab='BC/AD')
 #mtext(val.hdr, side = 1, col = 'red')
 
-hpd(combi$Combinaison, prob = .95)
+hpd(combiAM$Combinaison, prob = .95)
 ```
 
 # Combinaison AM & 14C
@@ -195,15 +195,17 @@ hpd(combiAMC14$Combinaison, prob = .95)
 tmin <- 1000
 tmax <- 1700
 # Il faut mettre des valeur qui existent dans le tableau
-imin <- which(combi$Combinaison$timeGrid == tmin)
-imax <- which(combi$Combinaison$timeGrid == tmax)
- tmp <- combiAMC14
+imin <- which(combiAM$Combinaison$timeGrid == tmin)
+imax <- which(combiAM$Combinaison$timeGrid == tmax)
+ tmp <- combiAM
  tmp$Combinaison$timeGrid <- tmp$Combinaison$timeGrid[imin:imax]
  tmp$Combinaison$densities <- tmp$Combinaison$densities[imin:imax]
  tmp$Combinaison$densities <-tmp$Combinaison$densities /sum(tmp$Combinaison$densities) 
  
 # Affichage résultat 
-hpd(tmp$Combinaison)
+hpd(tmp$Combinaison, prob = .95)
 plot(tmp)
 ```
+
+
 

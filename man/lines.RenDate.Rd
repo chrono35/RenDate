@@ -9,6 +9,7 @@
   withPositions = FALSE,
   pause = FALSE,
   dateHeight = 30,
+  normalize = FALSE,
   borderCol = NULL,
   fillCols = rep("gray", length(x)),
   withHDR = TRUE,

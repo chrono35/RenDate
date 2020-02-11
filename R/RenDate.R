@@ -458,7 +458,7 @@ mesure.enveloppe <- function(t, mesure, std, col.env = "gray",  col.mesure = "da
   
   
 }
-#' Calcul la combinaison au sens produit de deux densités
+#' Calcul la combinaison au sens produit de deux densités de class "RenDate"
 #' @param timeScale permet de modifier la grille de temps
 #' @export
 produit.RenDate <- function(date1, date2, timeScale = 1)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/RenDate.R
 \name{produit.RenDate}
 \alias{produit.RenDate}
-\title{Calcul la combinaison au sens produit de deux densités}
+\title{Calcul la combinaison au sens produit de deux densités de class "RenDate"}
 \usage{
 produit.RenDate(date1, date2, timeScale = 1)
 }
@@ -10,5 +10,5 @@ produit.RenDate(date1, date2, timeScale = 1)
 \item{timeScale}{permet de modifier la grille de temps}
 }
 \description{
-Calcul la combinaison au sens produit de deux densités
+Calcul la combinaison au sens produit de deux densités de class "RenDate"
 }

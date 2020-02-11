@@ -9,6 +9,7 @@
   withPositions = FALSE,
   pause = FALSE,
   dateHeight = 30,
+  normalize = FALSE,
   borderCol = NULL,
   fillCols = rep("gray", length(x)),
   withHDR = TRUE,
@@ -17,9 +18,11 @@
 )
 }
 \arguments{
+\item{normalize}{force le maximum à la valeur 1}
+
 \item{withHDR}{Calcul le hdr (hpd) et remplie la surface correspondant}
 
-\item{dateHeigth}{Fixe la hauteur des densités}
+\item{dateHeigth}{Fixe la hauteur des densités, quand withPositions est TRUE}
 }
 \description{
 Trace des courbe de densité
