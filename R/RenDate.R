@@ -140,6 +140,7 @@ setGeneric("hpd", package = "RenDate", valueClass = "RenDate",
   
   ag = date$timeGrid
   de = date$densities
+  stp <- date$timeScale
 
   # Error checking
   if(is.null(ag)) stop('timeGrid not found in date object.')
