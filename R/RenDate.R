@@ -125,22 +125,22 @@ calibrate <- function (mesures, std, calCurves, ids = NULL, positions = NULL,   
 }
 
 #' Calcul le hpd (hdr) sur une densité de probabilité de date
-#' @param date densité produite par la fonction calibrate, génértant un objet de class"RenDate" 
+#' @param date densité produite par la fonction calibrate, génértant un objet de class "RenDate" 
 #' @param prob requested surface value [0, 1]
 #' @export
-setGeneric("hpd", 
+setGeneric("hpd", package = "RenDate", valueClass = "RenDate",
  function(date, prob = 0.95) 
 {
   
-  # A function to return the HPD interval for a date object which should have an ageGrid and a densities argument
+  # A function to return the HPD interval for a date object which should have an timeGrid and a densities argument
   # I was previously using the hdrcde package but this has several unnecessary dependencies
   
   ag = date$timeGrid
   de = date$densities
-  
+
   # Error checking
-  if(is.null(ag)) stop('Age grid not found in date object.')
-  if(is.null(de)) stop('Densities not found in date object.')
+  if(is.null(ag)) stop('timeGrid not found in date object.')
+  if(is.null(de)) stop('densities not found in date object.')
   if(findInterval(prob, c(0, 1))!=1) stop('prob value outside (0,1).')
   
   # Put the probabilities in order
@@ -152,8 +152,8 @@ setGeneric("hpd",
   good_ag = sort(ag[o][good_cu])
   
   # Pick out the extremes of each range
-  breaks = diff(good_ag)>1
-  where_breaks = which(diff(good_ag)>1)
+  breaks = diff(good_ag)>2*stp
+  where_breaks = which(diff(good_ag)>2*stp)
   n_breaks = sum(breaks) + 1
   # Store output
   out = vector('list', length = n_breaks)
@@ -161,7 +161,10 @@ setGeneric("hpd",
   high_seq = ifelse(length(where_breaks)==0, length(breaks), where_breaks[1])
   for(i in 1:n_breaks) {
     out[[i]] = c(good_ag[low_seq], good_ag[high_seq])
-    curr_dens = round(100*sum(de[o][seq(good_cu[low_seq], good_cu[high_seq])]), 1)
+    #curr_dens = round(100*sum(de[o][seq(good_cu[low_seq], good_cu[high_seq])]), 1) !! FALSE
+    i_low <- match(good_ag[low_seq], ag)
+    i_high <- match(good_ag[high_seq],ag)
+    curr_dens = round(100*sum(de[i_low : i_high]), digits = 1)
     names(out)[[i]] = paste0(as.character(curr_dens),'%')
     low_seq = high_seq + 1
     high_seq = ifelse(i<n_breaks-1, where_breaks[i+1], length(breaks))
