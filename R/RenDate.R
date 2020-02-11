@@ -131,7 +131,7 @@ calibrate <- function (mesures, std, calCurves, ids = NULL, positions = NULL,   
 #' @param date densité produite par la fonction calibrate, génértant un objet de class "RenDate" 
 #' @param prob requested surface value [0, 1]
 #' @export
-setGeneric("hpd", package = "RenDate", valueClass = "List",
+setGeneric("hpd", package = "RenDate", valueClass = "list",
  function(date, prob = 0.95) 
 {
   
