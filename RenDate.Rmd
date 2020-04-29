@@ -1,0 +1,265 @@
+---
+title: "RenDate"
+author: "Ph Dufresne"
+date: "07/02/2020"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Pour faire un pdf avec Knit
+install.packages('tinytex')
+tinytex::install_tinytex()
+
+# Chargement des fonctions de RenDate.R 
+##via GitHub
+```{r echo = TRUE, message=FALSE, warning=FALSE}
+
+ if (!require(devtools))
+ {install.packages("devtools")}
+
+devtools::install_github("chrono35/RenDate", force = TRUE)
+library("RenDate") #, lib.loc="/Library/Frameworks/R.framework/Versions/3.6/Resources/library")
+```
+
+
+## via source dans répertoire /R
+```{r echo = TRUE}
+# source('R/RenDate.R', echo=FALSE)
+```
+
+## Memo
+Quand on modifie le code , il faut penser à faire la documentation avec:
+
+setwd("/Users/dufresne/Documents/R_Project/RenDate")
+devtools::document()
+
+# Chargement des courbes de calibration
+## Chargement des fichiers de calibration AM au format csv
+```{r chargement courbe archeomag}
+# ne pas oublier d'enlever les points de référence à la fin !!!
+GAL2002sph2014_I <- read.table("Calib/AM/GAL2002sph2014_I.csv", dec=',', sep=";",header=FALSE)
+GAL2002sph2014_D <- read.table("Calib/AM/GAL2002sph2014_D.csv", dec=',', sep=";",header=FALSE)
+
+gwh2013uni_f <- read.table("Calib/AM/gwh2013uni_f.csv", dec=',', sep=";",header=FALSE)
+```
+
+## Chargement des fichiers de calibration 14C
+```{r}
+ intCal13 <- read.csv("~/Documents/projects/_Test_R/AMCalibrate/intcal13.14c", header = FALSE,
+                      comment.char="#")
+```
+
+
+
+## Création et sauvegarde des fichiers rda. utilisés dans RenDate dans le répertoire courant
+
+```{r create GAL2002sph2014_I}
+#library(Bchron)
+# création courbe en AD/BC
+createCalCurve("GAL2002sph2014_I", GAL2002sph2014_I$V1, GAL2002sph2014_I$V2, GAL2002sph2014_I$V3 )
+createCalCurve("GAL2002sph2014_D", GAL2002sph2014_D$V1, GAL2002sph2014_D$V2, GAL2002sph2014_D$V3)
+createCalCurve("gwh2013uni_f", gwh2013uni_f$V1, gwh2013uni_f$V2, gwh2013uni_f$V3)
+
+# création courbe en BP
+createCalCurve("GAL2002sph2014_I_BP",GAL2002sph2014_I$V1 - 1950, GAL2002sph2014_I$V2, GAL2002sph2014_I$V3)
+createCalCurve("GAL2002sph2014_D_BP",GAL2002sph2014_D$V1 - 1950, GAL2002sph2014_D$V2, GAL2002sph2014_D$V3)
+createCalCurve("gwh2013uni_f_BP", gwh2013uni_f$V1 - 1950, gwh2013uni_f$V2, gwh2013uni_f$V3)
+
+intCal13_AD <- intCal13
+intCal13_AD$V1 <- 1950 - intCal13_AD$V1
+createCalCurve("IntCal13_AD", intCal13_AD$V1, intCal13_AD$V2, intCal13_AD$V3)
+createCalCurve("IntCal13_BP", intCal13$V1, intCal13$V2, intCal13$V3)
+```
+
+# Datation
+## Datation 14C
+```{r Datation 14C}
+C14 <- 460
+errC14 <- 30
+date14C <- calibrate(mesures = C14 ,std = errC14, calCurves = 'IntCal13_AD', ids = 'C14', timeScale = 0.1)
+
+# Tracé de la courbe 14C
+ # réduction de la période
+tmin <- 1200
+tmax <- 1600
+xlim <- c(tmin, tmax)
+
+# Il faut mettre des valeur qui existent dans le tableau
+imin <- which(intCal13_AD$V1 == tmin)
+imax <- which(intCal13_AD$V1 == tmax)
+ylim <- range(intCal13_AD$V2[imin:imax] )
+
+par( fig=c(0, 1, 0.50, 1), mar=c(0, 5, 0, 1))
+
+courbe.enveloppe(t=intCal13_AD$V1, mean=intCal13_AD$V2, intCal13_AD$V3, ylab = '14C', xlab = NA,  xaxt = "n",
+                 xlim = xlim, ylim = ylim)
+mesure.enveloppe(intCal13_AD$V1, mesure = C14, std = errC14)
+text(intCal13_AD$V1[imin], C14, labels=as.character(C14) )
+
+par(fig=c(0, 1, 0.0, 0.50), new= TRUE, mar=c(5, 5, 0, 1) )
+
+plot(date14C, col = "blue", hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD',
+     xlim = xlim, yaxt="n")
+
+print('Resultat pour le 14C')
+hpd(date14C$C14, prob = .95)
+```
+
+
+## Datation AM
+```{r Datation AM}
+IParis = 70.8
+DParis = 6.8
+alpha95 = 1.38
+# clcul des erreurs
+errInc <- alpha95 /2.448
+errDec <- alpha95/(2.448*cos(IParis*pi/180))
+
+dateInc1 <- calibrate(mesures = IParis, std = errInc, calCurves='GAL2002sph2014_I', ids='Inclinaison', timeScale = 0.01)
+
+dateDec1 <- calibrate(mesures = DParis , std = errDec, calCurves='GAL2002sph2014_D', ids='Declinaison', timeScale = 0.01)
+
+# Exemple : plusieurs dates en même temps
+#dateIncDec <- calibrate(mesures = c(IParis, DParis), std = c(errInc, errDec), calCurves = c('GAL2002sph2014_I', 'GAL2002sph2014_D'), ids = c('Inclinaison', 'Declinaison'), positions = c(1, 2) )
+```
+
+
+
+```{r plot resultat AM}
+# Tracé de la superposition des deux densités obtenues mfrow = c(3,1),
+
+# RenDate.plot(dateIncDec, col = "blue", hdrCol = adjustcolor( "blue", alpha.f = 0.2), main="Densités positionnées", withPosition=TRUE, fillCols = c(adjustcolor( "blue", alpha.f = 0.2), adjustcolor( "blue", alpha.f = 0.4)), dateHeight = 1 )
+
+ par(cex=0.7)
+# Tracé de la courbe Inclinaison
+par( fig=c(0, 1, 0.70, 1), new=FALSE, mar=c(0, 5, 0.2, 0))
+courbe.enveloppe(GAL2002sph2014_I$V1, GAL2002sph2014_I$V2, GAL2002sph2014_I$V3, ylab='Inclinaison', xlab=NA,  xaxt="n", col.env = "blue")
+mesure.enveloppe(GAL2002sph2014_I$V1, mesure = IParis, std = errInc) 
+text(GAL2002sph2014_I$V1[1], IParis, labels=as.character(IParis) )
+# Tracé de la courbe Déclinaison
+par(fig=c(0, 1, 0.40, 0.70), new=TRUE, mar=c(0, 5, 0, 0))
+courbe.enveloppe(GAL2002sph2014_D$V1, GAL2002sph2014_D$V2, GAL2002sph2014_D$V3, ylab='Declinaison', xlab=NA, xaxt="n" )
+mesure.enveloppe(GAL2002sph2014_D$V1, mesure = DParis, std = errDec) 
+text(GAL2002sph2014_D$V1[1], DParis, labels=as.character(DParis) )
+
+# Tracé de la superposition des deux densités obtenues
+par(fig=c(0, 1, 0.0, 0.40), new=TRUE, mar=c(5, 5, 3, 0))
+plot(dateInc1, col = "blue", hdrCol = adjustcolor( "blue", alpha.f = 0.2), main="Densités superposées", xlab='BC/AD', yaxt="n" )
+lines(dateDec1, col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f = 0.2))
+
+#print('Resultat pour l inclinaison')
+#hpd(dateInc1$Inclinaison, prob = .95 )
+
+#print('Resultat pour la declinaison')
+#my_hdr =hpd(dateDec1$Declinaison, prob = .95)
+```
+
+
+# Combinaison AM
+
+```{r produit AM}
+combiAM<- produit.RenDate(dateInc1, dateDec1, timeScale = 1)
+
+par(mfrow = c(2,1), mar=c(1, 5, 2, 0))
+
+plot(dateInc1, col = "blue", hdrCol = adjustcolor( "blue", alpha.f = 0.2), xlab=NA, main='Superposition',  normalize = TRUE,  yaxt="n", xaxt="n")
+lines(dateDec1, col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f = 0.2),  normalize = TRUE,  yaxt="n")
+
+par( mar=c(5, 5, 2, 0))
+val.hdr <- paste(hpd(combiAM$Combinaison, prob = .95), ' à 95% BC/AD' )
+plot(combiAM, withHDR = TRUE, main='Combinaison' ,  normalize = TRUE, yaxt="n", xlab='BC/AD')
+#mtext(val.hdr, side = 1, col = 'red')
+
+hpd(combiAM$Combinaison, prob = .95)
+```
+
+# Combinaison AM et 14C
+
+```{r produit AM et C14}
+
+combiAMC14<- produit.RenDate(combiAM, date14C, timeScale = 0.1)
+
+par(mfrow = c(2,1), mar=c(1, 5, 2, 0))
+
+xlim <- range(combiAMC14$Combinaison$timeGrid)
+plot(date14C, col = "red", hdrCol = adjustcolor( "red", alpha.f = 0.2), xlab=NA, xlim = xlim, main='Superposition', normalize = TRUE,  yaxt="n", xaxt="n")
+lines(dateDec1, col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f = 0.2),  normalize = TRUE)
+lines(dateInc1, col="blue", hdrCol = adjustcolor( "blue", alpha.f = 0.2),  normalize = TRUE)
+
+par( mar=c(5, 5, 2, 0))
+val.hdr <- paste( hpd(combiAMC14$Combinaison, prob = .95), ' à 95% BC/AD' )
+plot(combiAMC14, withHDR = TRUE, main='Combinaison', normalize = TRUE ,  yaxt="n", xlab="BC/AD")
+mtext(val.hdr, side = 1, col = 'red', line = 2)
+
+hpd(combiAMC14$Combinaison, prob = .95)
+```
+
+
+```{r réduction de la période}
+ # réduction de la période
+tmin <- 1000
+tmax <- 1700
+# Il faut mettre des valeurs qui existent dans le tableau
+imin <- which(combiAM$Combinaison$timeGrid == tmin)
+imax <- which(combiAM$Combinaison$timeGrid == tmax)
+ tmp <- combiAM
+ tmp$Combinaison$timeGrid <- tmp$Combinaison$timeGrid[imin:imax]
+ tmp$Combinaison$densities <- tmp$Combinaison$densities[imin:imax]
+ tmp$Combinaison$densities <-tmp$Combinaison$densities /sum(tmp$Combinaison$densities) 
+ 
+# Affichage résultat 
+hpd(tmp$Combinaison, prob = .95)
+plot(tmp)
+```
+
+
+# ---------- test
+```{r}
+# si on a l'erreur :la chaîne de caractères entrée 1 est incorrecte dans cet environnement linguistique
+# cela correspond au mauvais encoding
+read.Ref <- function(file.Ref, encoding = "macroman")
+{
+  # Lecture et extraction des points de la courbe
+  file.Ref="Calib/AM/GAL2002sph2014_I.ref"
+  lin<- NULL
+  fil <- file(file.Ref, "r", encoding = "macroman") #, encoding = encoding)
+  lin <- readLines(fil)
+  close(fil)
+  # Recherche position-ligne des points de référence
+  g <- NULL
+  # compte le nombre de mesures
+  n.measures <-0
+  for (i in 1:length(lin)) {
+    if (as.logical(length(grep("#", lin[i])))==FALSE  && as.logical(length(grep("/", lin[i])) )==FALSE )
+      n.measures <- n.measures + 1
+    
+    if (length(grep("# reference points", lin[i])) ){
+      g<- i
+      break
+    }
+  }
+  
+  list <- NULL
+  list$measures<- read.table(file.Ref, dec='.', sep=",",header=FALSE, skip = i-n.measures-1, comment.char = "/", nrows = n.measures)
+  colnames(list$measures) <- c("t", "value", "sigma")
+  
+  if (g<length(lin) ) {
+    list$pts.ref<- read.table(file.Ref, dec='.', sep=",",header=FALSE, skip = i+1 , comment.char = "#")
+  colnames(list$pts.ref) <- c("No", "tij1", "tij2", "tm", "Yij", "Err_Yijc")
+  
+  }
+  
+  #-------
+  
+  return(list)
+}
+```
+
+```{r}
+test <- read.Ref("Calib/AM/GAL2002sph2014_I.ref")
+```
+
