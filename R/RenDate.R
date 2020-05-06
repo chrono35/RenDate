@@ -494,40 +494,53 @@ produit.RenDate <- function(date1, date2, timeScale = 1)
 #' Lecture d'un fichier de référence
 #' @param encoding  Pour les fichiers du MacOS, il faut "macroman" -> difficle à connaitre, peut être "latin1" ou "utf8".
 #' @return une liste de data.frame
+#' @example 'curveI <- read.Ref("Calib/AM/GAL2002sph2014_I.ref")'
 #' @export
 read.Ref <- function(file.Ref, encoding = "macroman")
 {
   # Lecture et extraction des points de la courbe
-  file.Ref="Calib/AM/GAL2002sph2014_I.ref"
+  # file.Ref="/Users/dufresne/Documents/AM/Croatie_Loron_Tar-Vabriga_2018/GAL2002sph2014_D.ref"
   lin<- NULL
   fil <- file(file.Ref, "r", encoding = "macroman") #, encoding = encoding)
   lin <- readLines(fil)
   close(fil)
   # Recherche position-ligne des points de référence
-  g <- NULL
-  # compte le nombre de mesures
+  g <- length(lin)
+  # Compte le nombre de mesures
   n.measures <-0
   for (i in 1:length(lin)) {
     if (as.logical(length(grep("#", lin[i])))==FALSE  && as.logical(length(grep("/", lin[i])) )==FALSE )
       n.measures <- n.measures + 1
     
-    if (length(grep("# reference points", lin[i])) ){
+    if (length(grep("# reference points", lin[i])) || length(grep("# Reference points", lin[i])) ){
       g<- i
       break
     }
   }
   
+  listtmp <- NULL
+  listtmp<- read.table(file.Ref, dec='.', sep=",", header=FALSE, 
+                          skip = i-n.measures-1, comment.char = "#", 
+                          nrows = n.measures,
+                          stringsAsFactors=FALSE) 
   list <- NULL
-  list$measures<- read.table(file.Ref, dec='.', sep=",",header=FALSE, skip = i-n.measures-1, comment.char = "/", nrows = n.measures)
-  colnames(list$measures) <- c("t", "value", "sigma")
+  list$curve <- listtmp
+  colnames(list$curve) <- c("t", "value", "sigma")
   
+  listtmp <- NULL
   if (g<length(lin) ) {
-    list$pts.ref<- read.table(file.Ref, dec='.', sep=",",header=FALSE, skip = i+1 , comment.char = "#")
-    colnames(list$pts.ref) <- c("No", "tij1", "tij2", "tm", "Yij", "Err_Yijc")
-    
+    listtmp<- read.table(file.Ref, dec='.', 
+                              sep=",", header=FALSE, 
+                              skip = i+1, 
+                              comment.char = "#",
+                              stringsAsFactors=FALSE)
+    #list$pts.ref <- NULL
+    list$pts.ref <- listtmp
+    colnames(list$pts.ref) <- c("tij1", "tij2", "tm", "Yij", "Err_Yijc")
   }
   
   #-------
   
   return(list)
 }
+
