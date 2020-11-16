@@ -2,7 +2,7 @@
 % Please edit documentation in R/RenDate.R
 \name{mesure.enveloppe}
 \alias{mesure.enveloppe}
-\title{Trace une roite représentant une mesure avec son enveloppe d erreur à 1 sigma et deux sigma}
+\title{Trace une droite représentant une mesure avec son enveloppe d erreur à 1 sigma et deux sigma}
 \usage{
 mesure.enveloppe(
   t,
@@ -14,5 +14,5 @@ mesure.enveloppe(
 )
 }
 \description{
-Trace une roite représentant une mesure avec son enveloppe d erreur à 1 sigma et deux sigma
+Trace une droite représentant une mesure avec son enveloppe d erreur à 1 sigma et deux sigma
 }
