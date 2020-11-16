@@ -593,8 +593,8 @@ wiggle.indice <- function(f, imin, imax)
 #' @export
 wiggle.uniform <- function(x, wiggle.min, wiggle.max)
 {
+  out <- x
   for (i in length(x)) {
-    out[[i]] <- x[[i]]
     timeScale = x[[i]]$timeScale
     
     wiggle.range <- c(wiggle.min/timeScale, wiggle.max/timeScale)
