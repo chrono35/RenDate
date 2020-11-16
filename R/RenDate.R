@@ -653,7 +653,7 @@ wiggle.gauss <- function(x, mean, sd)
     out[[i]]$densities <- wiggle.gauss.dens(x[[i]]$densities, mean, sd, x[[i]]$timeScale)
   }
   
-  names(out) = paste("wiggle gauss [", mean, ";",  sdt, "]", sep = "")
+  names(out) = paste("wiggle gauss [", mean, ";",  sd, "]", sep = "")
   return(out)
 }
 
