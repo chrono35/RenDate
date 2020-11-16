@@ -10,7 +10,7 @@
 #  http://www.r-project.org/Licenses/
 #  _________________________________________________________________________________
 
-# Version 2020-02-07
+# Version 2020-11-16
 #
 
 #' RenDate; inspiré du package Bchron (https://cran.r-project.org/web/packages/Bchron/index.html) développé par Andrew Parnell <Andrew.Parnell at mu.ie>, 
@@ -125,6 +125,55 @@ calibrate <- function (mesures, std, calCurves, ids = NULL, positions = NULL,   
   return(out)
 }
 
+#' Fonction qui permet le calcul de la densité de probabilté de date uniforme - fonction porte
+#' @param gate.min début de la porte
+#' @param gate.max fin de la porte
+#' @param timeGrid.min valeur minimale de la grille
+#' @param timeGrid.max valeur minimale de la grille
+#' @param timeScale pas de la grille de temps
+#' @param ids nom ou identifiant
+#' @export
+date.uniform <- function( gate.min = -0, gate.max = 100, time.grid.min = -1000, time.grid.max = 2000, time.grid.scale = 1, ids = NULL, position = NULL)
+{
+  out = list()
+  timeGrid <- seq(time.grid.min, time.grid.max, by = time.grid.scale)
+  dens  <- dunif(timeGrid, min = gate.min, max = gate.max)
+  
+  out[[1]] = list(gate.min = gate.min, gate.max = gate.max, 
+                  calCurves = NA, timeGrid = timeGrid, densities = dens,
+                  positions = position, timeScale = time.grid.scale)
+  
+  if (is.null(ids)) 
+    ids = paste("U[", gate.min, ";",  gate.max, "]", sep = "")
+  names(out) = ids
+  class(out) = "RenDate"
+  return(out)
+}
+
+#' Fonction qui permet le calcul de la densité de probabilté de date uniforme - fonction porte
+#' @param mean moyenne
+#' @param sd standard deviations
+#' @param timeGrid.min valeur minimale de la grille
+#' @param timeGrid.max valeur minimale de la grille
+#' @param timeScale pas de la grille de temps
+#' @param ids nom ou identifiant
+#' @export
+date.gaussian <- function( mean = 0, sd = 10, time.grid.min = -1000, time.grid.max = 2000, time.grid.scale = 1, ids = NULL, position = NULL)
+{
+  out = list()
+  timeGrid <- seq(time.grid.min, time.grid.max, by = time.grid.scale)
+  dens  <- dnorm(timeGrid, mean = mean, sd=sd)
+  
+  out[[1]] = list(gate.min = gate.min, gate.max = gate.max, 
+                  calCurves = NA, timeGrid = timeGrid, densities = dens,
+                  positions = position, timeScale = time.grid.scale)
+  
+  if (is.null(ids)) 
+    ids = paste("N(", mean, ";",  sd, ")", sep = "")
+  names(out) = ids
+  class(out) = "RenDate"
+  return(out)
+}
 #' Calcul le hpd (hdr) sur une densité de probabilité de date
 #' @param date densité produite par la fonction calibrate, génértant un objet de class "RenDate" 
 #' @param prob requested surface value [0, 1]
@@ -444,7 +493,7 @@ courbe.enveloppe <- function(t, mean, std, col.env = "forestgreen",  xlim = NULL
   )
   
 }
-#' Trace une roite représentant une mesure avec son enveloppe d erreur à 1 sigma et deux sigma
+#' Trace une droite représentant une mesure avec son enveloppe d erreur à 1 sigma et deux sigma
 #' @export
 mesure.enveloppe <- function(t, mesure, std, col.env = "gray",  col.mesure = "darkgray", ...)
 {
@@ -489,7 +538,188 @@ produit.RenDate <- function(date1, date2, timeScale = 1)
   return(out)
 }
 
-# si on a l'erreur :la chaîne de caractères entrée 1 est incorrecte dans cet environnement linguistique
+# en utilisant, la fonction convole de R
+# les indices imin et imax sont relatifs, c.à.d qu'ils peuvent être négatifs ou nulles
+wiggle.indice <- function(f, imin, imax)
+{
+  if (imax < imin) {
+    message("imax must be greater than imin")
+    return(NULL)
+  }
+  
+  wiggle.span <- imax - imin + 1
+  wiggle.span.n <- abs(wiggle.span)
+  wiggle.span.gate <- rep(1/wiggle.span.n, wiggle.span.n)
+  
+  # condition pour convole
+
+  if (imin >= 0) {
+    ## 1 - tmin et tmax >0
+    wiggle <- c(rep(0, trunc(abs(imin)) ), wiggle.span.gate)
+    f0 <- f #c(f, rep(0, wiggle.span.n) )
+    # Je garde le même f0= f
+    wiggle.conj <- FALSE
+    
+  } else {
+    ## 2 - tmin < 0 et tmax >0
+    ## 3 - tmin et tmax < 0
+    if (imax >= 0) {
+      wiggle <- wiggle.span.gate
+      f0 <- c(f[-c(1: trunc(abs(imin)))], rep(0, trunc(abs(imin))) )
+      wiggle.conj <- FALSE
+      
+    } else {
+      f0 <- f
+      wiggle <- c(rep(0, trunc(abs(imax)) ), wiggle.span.gate)
+      wiggle.conj <- TRUE # je dois inverser-conjuguer la fft
+    }
+    
+  }
+  # La longueur du produit de convolution est égale à M+N-1
+  # Il faut donc réduire le tableau pour retrouver la taille originale
+  conv <- convolve(f0, wiggle, conj= wiggle.conj, type = "open")[length(wiggle):(length(f0)+length(wiggle)-1)]
+  # Normalisation
+  conv <- conv/sum(conv)
+  
+  return(conv)
+}
+
+#' Calcul le wiggle (décalage) d'une densité de class "RenDate"
+#' Fonction utilisée avec produit.RenDate() pour calculer le "Wiggle Matching"
+#' Il s'agit d'un poroduit de convolution de la datation par une "fonction porte"
+#' @param x une densité (datation) de class "RenDate"
+#' @param wiggle.min la borne inférieure du décalage
+#' @param wiggle.max la borne supérieure du décalage
+#' @export
+wiggle.uniform <- function(x, wiggle.min, wiggle.max)
+{
+  for (i in length(x)) {
+    out[[i]] <- x[[i]]
+    timeScale = x[[i]]$timeScale
+    
+    wiggle.range <- c(wiggle.min/timeScale, wiggle.max/timeScale)
+    wiggle.imin <- floor(min(wiggle.range))
+    wiggle.imax <- floor(max(wiggle.range))
+    
+    out[[i]]$densities <- wiggle.indice(x[[i]]$densities, wiggle.imin, wiggle.imax)
+  }
+  
+  names(out) = paste("wiggle Uniforme [", wiggle.min, ";",  wiggle.max, "]", sep = "")
+  return(out)
+}
+
+# Calcul de wiggle Matching en utilisant, la fonction convole() de R
+# fonction utilisée dans le wiggle.gauss
+wiggle.gauss.dens <- function(f, t.mean, t.sd, f.scale)
+{
+  f.len <- length(f)
+  if (t.sd <= 0) {
+    message("t.sd must be positive")
+    return(NULL)
+  }
+  # génération de la gaussien, centrée sur l'intervalle
+  xmin <- -trunc(f.len/2)
+  xmax <- f.len + xmin
+  x <- seq(xmin/f.scale, xmax/f.scale, length.out = f.len)
+  
+  wiggle.gauss.f <- dnorm(x, t.mean, t.sd)
+  
+  if (max(wiggle.gauss.f) == 0) {
+    warning("Time scale too hight, no possible convolution")
+  }
+  
+  # padding
+  f.padding = c(f, rep(0, f.len ) )
+  
+  # La longueur du produit de convolution est égale à M+N-1
+  # Il faut donc réduire le tableau pour retrouver la taille originale
+  conv <- convolve(f.padding, wiggle.gauss.f, conj= FALSE, type = "open")[(f.len*1.5 ):( f.len*2.5 - 1)]
+  # Normalisation
+  conv <- conv/sum(conv)
+  return(conv)
+}
+
+#' Calcul le wiggle (décalage) d'une densité de class "RenDate"
+#' Fonction utilisée avec produit.RenDate() pour calculer le "Wiggle Matching"
+#' Il s'agit d'un produit de convolution de la datation par une "densité Normale"
+#' @param x une densité (datation) de class "RenDate"
+#' @param mean la valeur moyenne
+#' @param sd la valeur de l'écart type
+#' @export
+wiggle.gauss <- function(x, mean, sd)
+{
+  out <- x
+  for (i in length(x)) {
+    out[[i]]$densities <- wiggle.gauss.dens(x[[i]]$densities, mean, sd, x[[i]]$timeScale)
+  }
+  
+  names(out) = paste("wiggle gauss [", mean, ";",  sdt, "]", sep = "")
+  return(out)
+}
+
+
+#' Fonction utilisée pour réduire l'intervalle support d'une densité de class "RenDate"
+#' @param dens une densité (datation) de class "RenDate"
+#' @param tmin la valeur moyenne
+#' @param tmax la valeur de l'écart type
+#' @export
+period.reduction <- function(dens, tmin=0, tmax=2000)
+{
+  if (tmax<= tmin) {
+    warning("tmax<= tmin")
+  }
+  
+  # boucle sur liste
+  res <- NULL
+  for(li in length(dens)) {
+    
+    # recherche du imin
+    imatch <- match(tmax, dens[[li]]$timeGrid, nomatch = -1);
+    if ( imatch > -1 ) {
+      imin <-  which(dens[[li]]$timeGrid == tmin) 
+      
+    } else if (tmin < dens[[li]]$timeGrid[1] ) {
+      imin <- 1
+      
+    } else {
+      for(i in seq(from=length(dens[[li]]$timeGrid), to=1, by=-1))
+        if (tmin < dens[[li]]$timeGrid[i]) {
+          imin <- i
+        }
+      
+    }
+    
+    # recherche du imax
+    imatch <- match(tmax, dens[[li]]$timeGrid, nomatch = -1);
+    if ( imatch > -1 ) {
+      imax <-  which(dens[[li]]$timeGrid == tmax) 
+      
+    } else if (tmax > max(dens[[li]]$timeGrid) ) {
+      imax <- length(dens[[li]]$timeGrid) 
+      
+    } else {
+      for(i in seq(from=1, to=length(dens[[li]]$timeGrid), by=1))
+        if (tmax > dens[[li]]$timeGrid[i]) {
+          imax <- i
+        }
+    }
+    if (imax<= imin) {
+      warning("imax<= imin")
+    }
+    res[[li]]$timeScale <- dens[[li]]$timeScale
+    res[[li]]$timeGrid <- dens[[li]]$timeGrid[imin:imax]
+    res[[li]]$densities <- dens[[li]]$densities[imin:imax]
+    # Normalisation de la surface
+    res[[li]]$densities <-res[[li]]$densities /sum(res[[li]]$densities)
+    
+  }
+  names(res) = names(dens)
+  class(res) = "RenDate"
+  return(res)
+}
+
+
+# si on a l'erreur : la chaîne de caractères entrée 1 est incorrecte dans cet environnement linguistique
 # cela correspond au mauvais encoding
 #' Lecture d'un fichier de référence
 #' @param encoding  Pour les fichiers du MacOS, il faut "macroman" -> difficle à connaitre, peut être "latin1" ou "utf8".
@@ -523,10 +753,11 @@ read.Ref <- function(file.Ref, encoding = "macroman")
                           skip = i-n.measures-1, comment.char = "#", 
                           nrows = n.measures,
                           stringsAsFactors=FALSE) 
+  colnames(listtmp)<-c("t", "value", "sigma")
   list <- NULL
+  list$curve <- NULL
   list$curve <- listtmp
-  colnames(list$curve) <- c("t", "value", "sigma")
-  
+
   listtmp <- NULL
   if (g<length(lin) ) {
     listtmp<- read.table(file.Ref, dec='.', 
@@ -534,13 +765,14 @@ read.Ref <- function(file.Ref, encoding = "macroman")
                               skip = i+1, 
                               comment.char = "#",
                               stringsAsFactors=FALSE)
-    #list$pts.ref <- NULL
-    list$pts.ref <- listtmp
-    colnames(list$pts.ref) <- c("tij1", "tij2", "tm", "Yij", "Err_Yijc")
+    list$pts.ref <- NULL
+    list$pts.ref$tij1 <- listtmp[1]
+    list$pts.ref$tij2 <- listtmp[2]
+    list$pts.ref$tm <- listtmp[3]
+    list$pts.ref$Yij <- listtmp[4]
+    list$pts.ref$Err_Yijc <- listtmp[5]
+
   }
-  
-  #-------
-  
   return(list)
 }
 

@@ -3,8 +3,9 @@ title: "RenDate"
 author: "Ph Dufresne"
 date: "07/02/2020"
 output:
-  word_document: default
   html_document: default
+  pdf_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -49,8 +50,8 @@ gwh2013uni_f <- read.table("Calib/AM/gwh2013uni_f.csv", dec=',', sep=";",header=
 
 ## Chargement des fichiers de calibration 14C
 ```{r}
- intCal13 <- read.csv("~/Documents/projects/_Test_R/AMCalibrate/intcal13.14c", header = FALSE,
-                      comment.char="#")
+ intCal13 <- read.csv("Calib/14C/intcal13.14c", header = FALSE, comment.char="#")
+ intCal20 <- read.csv("Calib/14C/intcal20.14c", header = FALSE, comment.char="#")
 ```
 
 
@@ -73,19 +74,24 @@ intCal13_AD <- intCal13
 intCal13_AD$V1 <- 1950 - intCal13_AD$V1
 createCalCurve("IntCal13_AD", intCal13_AD$V1, intCal13_AD$V2, intCal13_AD$V3)
 createCalCurve("IntCal13_BP", intCal13$V1, intCal13$V2, intCal13$V3)
+
+intCal20_AD <- intCal20
+intCal20_AD$V1 <- 1950 - intCal20_AD$V1
+createCalCurve("IntCal20_AD", intCal20_AD$V1, intCal20_AD$V2, intCal20_AD$V3)
+createCalCurve("IntCal20_BP", intCal20_AD$V1, intCal20_AD$V2, intCal20_AD$V3)
 ```
 
 # Datation
 ## Datation 14C
 ```{r Datation 14C}
-C14 <- 460
-errC14 <- 30
-date14C <- calibrate(mesures = C14 ,std = errC14, calCurves = 'IntCal13_AD', ids = 'C14', timeScale = 0.1)
+C14 <- 97
+errC14 <- 16
+date14C <- calibrate(mesures = C14 ,std = errC14, calCurves = 'IntCal13_AD', ids = 'C14', timeScale = 1)
 
 # Tracé de la courbe 14C
  # réduction de la période
-tmin <- 1200
-tmax <- 1600
+tmin <- 1000
+tmax <- 1950
 xlim <- c(tmin, tmax)
 
 # Il faut mettre des valeur qui existent dans le tableau
@@ -106,7 +112,7 @@ plot(date14C, col = "blue", hdrCol = adjustcolor( "blue", alpha.f = 0.2), main =
      xlim = xlim, yaxt="n")
 
 print('Resultat pour le 14C')
-hpd(date14C$C14, prob = .95)
+hpd(date14C$C14, prob = .955)
 ```
 
 
@@ -216,9 +222,302 @@ hpd(tmp$Combinaison, prob = .95)
 plot(tmp)
 ```
 
+```{r fonction periodRedution, echo = FALSE, message=FALSE, warning=FALSE, include=TRUE}
+periodReduction <- function(dens, tmin=0, tmax=2000)
+{
+   if (tmax<= tmin) {
+    warning("tmax<= tmin")
+  }
+  
+  # boucle sur liste
+  res <- NULL
+  for(li in length(dens)) {
 
-# ---------- test
+      # recherche du imin
+    imatch <- match(tmax, dens[[li]]$timeGrid, nomatch = -1);
+    if ( imatch > -1 ) {
+      imin <-  which(dens[[li]]$timeGrid == tmin) 
+      
+    } else if (tmin < dens[[li]]$timeGrid[1] ) {
+        imin <- 1
+  
+    } else {
+      for(i in seq(from=length(dens[[li]]$timeGrid), to=1, by=-1))
+        if (tmin < dens[[li]]$timeGrid[i]) {
+          imin <- i
+        }
+          
+    }
+    
+    # recherche du imax
+    imatch <- match(tmax, dens[[li]]$timeGrid, nomatch = -1);
+    if ( imatch > -1 ) {
+      imax <-  which(dens[[li]]$timeGrid == tmax) 
+      
+    } else if (tmax > max(dens[[li]]$timeGrid) ) {
+        imax <- length(dens[[li]]$timeGrid) 
+        
+    } else {
+      for(i in seq(from=1, to=length(dens[[li]]$timeGrid), by=1))
+        if (tmax > dens[[li]]$timeGrid[i]) {
+          imax <- i
+        }
+    }
+  if (imax<= imin) {
+    warning("imax<= imin")
+  }
+    res[[li]]$timeScale <- dens[[li]]$timeScale
+    res[[li]]$timeGrid <- dens[[li]]$timeGrid[imin:imax]
+    res[[li]]$densities <- dens[[li]]$densities[imin:imax]
+    # Normalisation de la surface
+    res[[li]]$densities <-res[[li]]$densities /sum(res[[li]]$densities)
+    
+  }
+  names(res) = names(dens)
+  class(res) = "RenDate"
+  return(res)
+}
+ 
+```
+
+# Wiggle Matching type Produit
+
+## Wiggle fixe
+Code Oxcal:
+ Options()
+ {
+  Curve("IntCal20","intcal20.14c");
+  Resolution=1;
+ };
+ Plot()
+ {
+  D_Sequence()
+  {
+   R_Date("ULA 9174", 1690, 15);
+   Gap(130);
+   R_Date("ULA 9175", 1545, 15);
+  };
+ };
+
+
+```{r dates pour Wiggle C14}
+C14.1 <- 1690
+errC14.1 <- 15
+date14C.1 <- calibrate(mesures = C14.1 ,std = errC14.1, calCurves = 'IntCal20_AD', ids = 'C14', timeScale = .1)
+
+
+C14.2 <- 1545
+errC14.2 <- 15
+date14C.2 <- calibrate(mesures = C14.2 ,std = errC14.2, calCurves = 'IntCal20_AD', ids = 'C14', timeScale = .1)
+
+wiggle = 130
+```
+
+```{r visu}
+
+plot(periodReduction( date14C.1, 0, 1000), col = "blue", hdrCol = adjustcolor( "blue", alpha.f = 0.2), xlab=NA, main='Superposition',  normalize = TRUE,  yaxt="n")
+lines(periodReduction(date14C.2, 0, 1000), col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f = 0.2),  normalize = TRUE,  yaxt="n")
+```
+
+### Calcul de la densité shiftée
+Dans notre cas, c'est la 14C.1 qui est décalée vers 14C.2
+
 ```{r}
+date14C.1.shifted <- date14C.1
+date14C.1.shifted$C14$timeGrid <- date14C.1$C14$timeGrid + wiggle
+```
+
+```{r visu densities shifted}
+plot(periodReduction( date14C.1.shifted, 0, 1000), col = "blue", hdrCol = adjustcolor( "blue", alpha.f = 0.2), xlab=NA, main='Superposition',  normalize = TRUE,  yaxt="n")
+lines(periodReduction(date14C.2, 0, 1000), col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f = 0.2),  normalize = TRUE,  yaxt="n")
+```
+### Résultat wiggle
+```{r produit wiggle}
+
+wiggleC14<- produit.RenDate(date14C.1.shifted, date14C.2, timeScale = .1)
+
+par(mfrow = c(2,1), mar=c(1, 5, 2, 0))
+tmin = 200
+tmax = 800
+xlim <- range(periodReduction(wiggleC14, tmin, tmax)$Combinaison$timeGrid)
+plot(periodReduction(date14C.2, tmin, tmax), col = "red", hdrCol = adjustcolor( "red", alpha.f = 0.2), xlab=NA, xlim = xlim, main='Superposition', normalize = TRUE,  yaxt="n", xaxt="n")
+lines(periodReduction(date14C.1.shifted, tmin, tmax), col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f = 0.2),  normalize = TRUE)
+
+par( mar=c(5, 5, 2, 0))
+val.hdr <- paste( hpd(wiggleC14$Combinaison, prob = .95), ' à 95% BC/AD' )
+plot(periodReduction(wiggleC14, tmin, tmax), withHDR = TRUE, main='Combine Wiggle', normalize = TRUE ,  yaxt="n", xlab="BC/AD")
+#mtext(val.hdr, side = 1, col = 'red', line = 2)
+
+hpd(wiggleC14$Combinaison, prob = .954)
+```
+
+
+## Wiggle intervalle Uniforme
+Remarque avec OxCal: Si on utilise D_Sequence, nous ne pouvons pas mettre d'erreur sur le gap(). Il faut utiliser une V_Sequence et alors le gap() est gaussien
+* Code Oxcal
+
+ Options()
+ {
+  Curve("IntCal20","intcal20.14c");
+  Resolution=.1;
+ };
+ Plot()
+ {
+  D_Sequence()
+  {
+   R_Date("ULA 9174", 1690, 15);
+   Gap(130);
+   R_Date("ULA 9175", 1545, 15);
+  };
+ };
+
+```{r}
+# 1ere date
+date14C.9174 <- calibrate(mesures = 1690 , std = 15, calCurves = 'IntCal20_AD',  ids = '9174', pathToCalCurves = paste0('./','data'), timeScale = 1)
+
+# 2eme date
+
+date14C.9175 <- calibrate(mesures = 1545 , std = 15, calCurves = 'IntCal20_AD',  ids = '9175', pathToCalCurves = paste0('./','data'), timeScale = 1)
+
+tmin <- 400
+tmax <- 600
+xlim <- c(tmin, tmax)
+
+# date14C <- c(date14C, wiggle.uniform(date14C, 200, 200) )
+# class(date14C) = "RenDate"
+par( fig=c(0, 1, 0.70, 1), new=FALSE, mar=c(0, 5, 0.2, 0))
+plot(date14C.9175, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n")
+
+# Wiggle
+
+date14C.9174.wiggle <-  wiggle.uniform(date14C.9174, 130, 130)
+par(fig=c(0, 1, 0.40, 0.70), new=TRUE, mar=c(0, 5, 0, 0))
+plot(date14C.9174, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n")
+lines(date14C.9174.wiggle, col ="red", xaxt="n")
+
+# Combinaison
+
+D_Sequence <- produit.RenDate(date14C.9174.wiggle, date14C.9175, timeScale = date14C.9174.wiggle[[1]]$timeScale)
+par(fig=c(0, 1, 0.0, 0.40), new=TRUE, mar=c(0, 5, 3, 0))
+plot(D_Sequence, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", ylab="Wiggle")
+
+
+hpd(date14C.9174[[1]])
+hpd(date14C.9174.wiggle[[1]])
+print("Combinaison")
+hpd(D_Sequence$Combinaison)
+
+
+```
+
+## Wiggle intervalle gaussien
+OxCal donne le résultat par calcul MCMC et donne les "a posteriori" des deux datations.
+Ici nous calculons l'une puis l'autre ensuite.
+Comme dit précédement, il faut utiliser la fonction V_Sequence pour pouvoir utiliser gap() avec une incertitude
+* Code OxCal
+
+Options()
+ {
+  Curve("IntCal20","intcal20.14c");
+  Resolution=.1;
+ };
+ Plot()
+ {
+  V_Sequence()
+  {
+   R_Date("ULA 9174", 1690, 15);
+   Gap(130, 10);
+   R_Date("ULA 9175", 1545, 15);
+  };
+ };
+
+
+### On recherche la date la plus récente
+On reprend le même exemple que pour le wiggle uniform.
+Remarque avec Oxcal, le résultat correspond à la date "ULA 9175"
+
+
+```{r}
+# 1ere date
+date14C.9174 <- calibrate(mesures = 1690 , std = 15, calCurves = 'IntCal20_AD',  ids = '9174', pathToCalCurves = paste0('./','data'), timeScale = 1)
+
+# 2eme date
+
+date14C.9175 <- calibrate(mesures = 1545 , std = 15, calCurves = 'IntCal20_AD',  ids = '9175', pathToCalCurves = paste0('./','data'), timeScale = 1)
+
+tmin <- 200
+tmax <- 600
+xlim <- c(tmin, tmax)
+
+par( fig=c(0, 1, 0.70, 1), new=FALSE, mar=c(0, 5, 0.2, 0))
+plot(date14C.9175, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n")
+
+# Wiggle
+
+date14C.9174.wiggle <-  wiggle.gauss(date14C.9174, 130, 10)
+par(fig=c(0, 1, 0.40, 0.70), new=TRUE, mar=c(0, 5, 0, 0))
+plot(date14C.9174, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n")
+lines(date14C.9174.wiggle, col ="red", xaxt="n")
+
+# Combinaison
+
+V_Sequence <- produit.RenDate(date14C.9174.wiggle, date14C.9175, timeScale = date14C.9174.wiggle[[1]]$timeScale)
+par(fig=c(0, 1, 0.0, 0.40), new=TRUE, mar=c(2, 5, 3, 0))
+plot(V_Sequence, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", ylab="Wiggle", xaxt=NULL)
+
+
+hpd(date14C.9174[[1]])
+hpd(date14C.9174.wiggle[[1]])
+print("Combinaison")
+hpd(V_Sequence$Combinaison, prob= 0.954)
+
+
+```
+
+### On recherche la date la plus vieille 
+Cette fois, c'est la plus récente qu'on décale vers la date plus vieille 9174.
+C'est le même code OxCal
+Résultat OxCal:
+349 (95.4%) 416 AD
+```{r}
+# 1ere date
+date14C.9174 <- calibrate(mesures = 1690 , std = 15, calCurves = 'IntCal20_AD',  ids = '9174', pathToCalCurves = paste0('./','data'), timeScale = 1)
+
+# 2eme date
+
+date14C.9175 <- calibrate(mesures = 1545 , std = 15, calCurves = 'IntCal20_AD',  ids = '9175', pathToCalCurves = paste0('./','data'), timeScale = 1)
+
+tmin <- 200
+tmax <- 600
+xlim <- c(tmin, tmax)
+
+par( fig=c(0, 1, 0.70, 1), new=FALSE, mar=c(0, 5, 0.2, 0))
+plot(date14C.9174, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n")
+
+# Wiggle
+
+date14C.9175.wiggle <-  wiggle.gauss(date14C.9175, -130, 10)
+par(fig=c(0, 1, 0.40, 0.70), new=TRUE, mar=c(0, 5, 0, 0))
+plot(date14C.9175, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n")
+lines(date14C.9175.wiggle, col ="red", xaxt="n")
+
+# Combinaison
+
+V_Sequence <- produit.RenDate(date14C.9175.wiggle, date14C.9174, timeScale = date14C.9174.wiggle[[1]]$timeScale)
+par(fig=c(0, 1, 0.0, 0.40), new=TRUE, mar=c(2, 5, 3, 0))
+plot(V_Sequence, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", ylab="Wiggle", xaxt=NULL)
+
+
+hpd(date14C.9174[[1]])
+hpd(date14C.9174.wiggle[[1]])
+print("Combinaison")
+hpd(V_Sequence$Combinaison, prob= 0.954)
+
+
+```
+
+# Lecture fichier Ref
+```{r read file ref}
 # si on a l'erreur :la chaîne de caractères entrée 1 est incorrecte dans cet environnement linguistique
 # cela correspond au mauvais encoding
 read.Ref <- function(file.Ref, encoding = "macroman")
@@ -262,4 +561,138 @@ read.Ref <- function(file.Ref, encoding = "macroman")
 ```{r}
 test <- read.Ref("Calib/AM/GAL2002sph2014_I.ref")
 ```
+
+# test trouve valeur et erreur
+Le but est de faire une routine qui retrouve la valeur et l'erreur à partir d'une hpd
+ - 1694 AD (28.1%) 1725 AD
+-1810 AD (67.4%) 1917 AD
+
+```{r trouve}
+time.step = 1
+
+find.tmin = 1694
+find.tmax = 1725
+confidence1 = 28.1
+
+#find
+m1 <- intCal20_AD[max(which(intCal20_AD$V1<=find.tmin) ), ]
+m2 <- intCal20_AD[max(which(intCal20_AD$V1<=find.tmax) ), ]
+
+tm1 <- NULL
+for (m in seq(find.tmin, find.tmax, by=time.step)) {
+  tm1 <- c(tm1, intCal20_AD[max(which(intCal20_AD$V1<=m) ), ]$V2)
+}
+hist(tm1)
+tmTot <- rep(tm1, trunc(confidence1))
+find.tmin = 1810
+find.tmax = 1917
+confidence2 = 67.4
+
+#find
+m1 <- intCal20_AD[max(which(intCal20_AD$V1<=find.tmin) ), ]
+m2 <- intCal20_AD[max(which(intCal20_AD$V1<=find.tmax) ), ]
+
+tm2 <- NULL
+for (m in seq(find.tmin, find.tmax, by=time.step)) {
+  tm2 <- c(tm2, intCal20_AD[max(which(intCal20_AD$V1<=m) ), ]$V2)
+}
+ hist(tm2)
+ 
+ tmTot <- c(tmTot, rep(tm2, trunc(confidence2)))
+ 
+ hist(tmTot)
+ mean(tmTot)
+ sqrt(var(tmTot) )
+```
+
+```{r generation datations}
+v.min = 75
+v.max = 150
+v.step = 1
+
+
+e.min = 5
+e.max = 50
+e.step = 1
+
+hpd.res <- NULL
+hpd.tmp <- NULL
+hpd.tmp.form <- NULL
+
+prob.total = 95.5
+
+hpd.res = vector('list')
+j <- 1
+for (v in seq(v.min, v.max, by=v.step)) {
+  for (e in seq(e.min, e.max, by=e.step)) {
+    date14C <- calibrate(mesures = v ,std = e, calCurves = 'IntCal13_AD', ids = 'C14', timeScale = 1)
+    
+    hpd.tmp <- hpd(date14C$C14, prob = prob.total/100) 
+    hpd.tmp.form = vector('list')
+    for (i in 1:length(hpd.tmp)) {
+      conf <- as.numeric( trimws(substr(names(hpd.tmp[i]), 0, nchar(names(hpd.tmp[i]))-1 ) ) )
+      hpd.tmp.form$conf[i] <- conf
+      hpd.tmp.form$tmin[i] <- hpd.tmp[[i]] [1]
+      hpd.tmp.form$tmax[i] <- hpd.tmp[[i]] [2]
+      hpd.tmp.form$v[i] <- v
+      hpd.tmp.form$err[i] <- e
+    }
+  
+    hpd.res[[j]] <- hpd.tmp.form 
+    j = j+1
+  }
+ 
+}
+
+```
+
+```{r}
+# Comparaison
+i.optimum <- NA
+
+T1 = 1694
+T2 = 1725
+C1 = 28.1
+ecart1 <- 1
+
+C2 = 67.4
+ecart2 <- 3
+
+str.res = NULL
+# comparaison des confiances
+for (i in 1:length(hpd.res)) {
+  for (j in 1:length(hpd.res[[i]]$conf)) {
+    if ( abs( hpd.res[[i]]$conf[j] - C1) <= ecart1 ) {
+      str.res1 <-  paste0( i," ", j, " v=", hpd.res[[i]]$v[j], " err=",hpd.res[[i]]$err[j] , " conf", j,"=", hpd.res[[i]]$conf[j], "% ", hpd.res[[i]]$tmin[j], "-", hpd.res[[i]]$tmax[j]) 
+    
+        if ( (j+1<=length(hpd.res[[i]]$conf)) &&  ( abs( hpd.res[[i]]$conf[j+1] - C2) <= ecart2) ) {
+          str.res1 <-  paste0(str.res1, " conf", j+1, "=", hpd.res[[i]]$conf[j+1], "% ", hpd.res[[i]]$tmin[j+1], "-", hpd.res[[i]]$tmax[j+1]) 
+        }
+      
+    } 
+    
+    else if ( abs( hpd.res[[i]]$conf[j] - C2) <= ecart2 ) {
+        str.res1 <-  paste0( i," ", j, " v=", hpd.res[[i]]$v[j], " err=",hpd.res[[i]]$err[j] , " conf", j , "=", hpd.res[[i]]$conf[j], "% ", hpd.res[[i]]$tmin[j], "-", hpd.res[[i]]$tmax[j]) 
+    
+     
+        if ( (j-1>=1) &&  ( abs( hpd.res[[i]]$conf[j-1] - C1) <= ecart1) ) {
+          str.res1 <-  paste0(str.res1, " conf", j-1, "=",  hpd.res[[i]]$conf[j-1], "% ", hpd.res[[i]]$tmin[j-1], "-", hpd.res[[i]]$tmax[j-1]) 
+        }
+     
+    } else {
+      str.res1 <- NULL
+    }
+    
+     str.res <- c(str.res, str.res1)
+  }
+ 
+}
+str.res
+```
+
+
+
+
+
+
 
