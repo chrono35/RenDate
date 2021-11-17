@@ -150,7 +150,7 @@ date.uniform <- function( gate.min = -0, gate.max = 100, time.grid.min = -1000, 
   return(out)
 }
 
-#' Fonction qui permet le calcul de la densité de probabilté de date uniforme - fonction porte
+#' Fonction qui permet le calcul de la densité de probabilté de date gaussienne - fonction gauss
 #' @param mean moyenne
 #' @param sd standard deviations
 #' @param timeGrid.min valeur minimale de la grille
@@ -164,8 +164,7 @@ date.gaussian <- function( mean = 0, sd = 10, time.grid.min = -1000, time.grid.m
   timeGrid <- seq(time.grid.min, time.grid.max, by = time.grid.scale)
   dens  <- dnorm(timeGrid, mean = mean, sd=sd)
   
-  out[[1]] = list(gate.min = gate.min, gate.max = gate.max, 
-                  calCurves = NA, timeGrid = timeGrid, densities = dens,
+  out[[1]] = list(calCurves = NA, timeGrid = timeGrid, densities = dens,
                   positions = position, timeScale = time.grid.scale)
   
   if (is.null(ids)) 
@@ -175,7 +174,7 @@ date.gaussian <- function( mean = 0, sd = 10, time.grid.min = -1000, time.grid.m
   return(out)
 }
 #' Calcul le hpd (hdr) sur une densité de probabilité de date
-#' @param date densité produite par la fonction calibrate, génértant un objet de class "RenDate" 
+#' @param date densité produite par la fonction calibrate, générant un objet de class "RenDate" 
 #' @param prob requested surface value [0, 1]
 #' @export
 setGeneric("hpd", package = "RenDate", valueClass = "list",
@@ -776,3 +775,31 @@ read.Ref <- function(file.Ref, encoding = "macroman")
   return(list)
 }
 
+#' Conversion une trace en datation pour l'utiliser avec les autres fonction du package
+#' @param trace  un vecteur history plot provenant de ChronoModel
+#' @return une date par lissage avec un noyaux, gaussien par defaut
+#' @export
+trace.to.date <- function( trace,  bw = "nrd", adjust = 1, from, to, gridLength = 1024,
+                           kernel = c("gaussian"),
+                           ids = NULL, position = NULL)
+{
+  out = list()
+  if (bw=="CM") {
+    sigma <- sd(trace) # sans biais
+    bandwidth<-1.06
+    bw <- bandwidth * sigma * length(trace)^ (-1./5.) # in CM = h
+    from <- min(trace) - 4. * h # in CM = a
+    to <- max(trace) + 4. * h # in CM = b
+  } 
+  dens  <- density(x=trace, bw = bw, adjust = adjust, kernel = kernel, from = from, to = to, n = gridLength)
+  dens$y <- dens$y/sum(dens$y)
+  out[[1]] = list(n = dens$n, bw = dens$bw, 
+                  calCurves = NA, timeGrid = dens$x, densities = dens$y,
+                  positions = position, timeScale = dens$x[2] - dens$x[1])
+  
+  if (is.null(ids)) 
+    ids = paste("trace : ", dens$data.name, sep = "")
+  names(out) = ids
+  class(out) = "RenDate"
+  return(out)
+}
