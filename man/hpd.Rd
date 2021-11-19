@@ -7,7 +7,7 @@
 hpd(date, prob = 0.95)
 }
 \arguments{
-\item{date}{densité produite par la fonction calibrate, génértant un objet de class "RenDate"}
+\item{date}{densité produite par la fonction calibrate, générant un objet de class "RenDate"}
 
 \item{prob}{requested surface value [0, 1]}
 }

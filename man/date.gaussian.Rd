@@ -2,7 +2,7 @@
 % Please edit documentation in R/RenDate.R
 \name{date.gaussian}
 \alias{date.gaussian}
-\title{Fonction qui permet le calcul de la densité de probabilté de date uniforme - fonction porte}
+\title{Fonction qui permet le calcul de la densité de probabilté de date gaussienne - fonction gauss}
 \usage{
 date.gaussian(
   mean = 0,
@@ -28,5 +28,5 @@ date.gaussian(
 \item{timeScale}{pas de la grille de temps}
 }
 \description{
-Fonction qui permet le calcul de la densité de probabilté de date uniforme - fonction porte
+Fonction qui permet le calcul de la densité de probabilté de date gaussienne - fonction gauss
 }
