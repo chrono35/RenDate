@@ -133,7 +133,7 @@ calibrate <- function (mesures, std, calCurves, ids = NULL, positions = NULL,   
 #' @param timeScale pas de la grille de temps
 #' @param ids nom ou identifiant
 #' @export
-date.uniform <- function( gate.min = -0, gate.max = 100, time.grid.min = -1000, time.grid.max = 2000, time.grid.scale = 1, ids = NULL, position = NULL)
+date_uniform <- function( gate.min = -0, gate.max = 100, time.grid.min = -1000, time.grid.max = 2000, time.grid.scale = 1, ids = NULL, position = NULL)
 {
   out = list()
   timeGrid <- seq(time.grid.min, time.grid.max, by = time.grid.scale)
@@ -158,7 +158,7 @@ date.uniform <- function( gate.min = -0, gate.max = 100, time.grid.min = -1000, 
 #' @param timeScale pas de la grille de temps
 #' @param ids nom ou identifiant
 #' @export
-date.gaussian <- function( mean = 0, sd = 10, time.grid.min = -1000, time.grid.max = 2000, time.grid.scale = 1, ids = NULL, position = NULL)
+date_gaussian <- function( mean = 0, sd = 10, time.grid.min = -1000, time.grid.max = 2000, time.grid.scale = 1, ids = NULL, position = NULL)
 {
   out = list()
   timeGrid <- seq(time.grid.min, time.grid.max, by = time.grid.scale)
@@ -466,7 +466,7 @@ lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, 
 
 #' Trace une courbe avec son enveloppe d erreur à 1 sigma et deux sigma
 #' @export
-courbe.enveloppe <- function(t, mean, std, col.env = "forestgreen",  xlim = NULL, ylim = NULL, new = TRUE,...)
+courbe_enveloppe <- function(t, mean, std, col.env = "forestgreen",  xlim = NULL, ylim = NULL, new = TRUE,...)
 {
   enveloppe1 <- mean + outer(std , c(1, -1))
   
@@ -494,7 +494,7 @@ courbe.enveloppe <- function(t, mean, std, col.env = "forestgreen",  xlim = NULL
 }
 #' Trace une droite représentant une mesure avec son enveloppe d erreur à 1 sigma et deux sigma
 #' @export
-mesure.enveloppe <- function(t, mesure, std, col.env = "gray",  col.mesure = "darkgray", ...)
+mesure_enveloppe <- function(t, mesure, std, col.env = "gray",  col.mesure = "darkgray", ...)
 {
   abline(h= mesure, col = col.mesure )
  
@@ -539,7 +539,7 @@ produit.RenDate <- function(date1, date2, timeScale = 1)
 
 # en utilisant, la fonction convole de R
 # les indices imin et imax sont relatifs, c.à.d qu'ils peuvent être négatifs ou nulles
-wiggle.indice <- function(f, imin, imax)
+wiggle_indice <- function(f, imin, imax)
 {
   if (imax < imin) {
     message("imax must be greater than imin")
@@ -590,7 +590,7 @@ wiggle.indice <- function(f, imin, imax)
 #' @param wiggle.min la borne inférieure du décalage
 #' @param wiggle.max la borne supérieure du décalage
 #' @export
-wiggle.uniform <- function(x, wiggle.min, wiggle.max)
+wiggle_uniform <- function(x, wiggle.min, wiggle.max)
 {
   out <- x
   for (i in length(x)) {
@@ -609,7 +609,7 @@ wiggle.uniform <- function(x, wiggle.min, wiggle.max)
 
 # Calcul de wiggle Matching en utilisant, la fonction convole() de R
 # fonction utilisée dans le wiggle.gauss
-wiggle.gauss.dens <- function(f, t.mean, t.sd, f.scale)
+wiggle_gauss_dens <- function(f, t.mean, t.sd, f.scale)
 {
   f.len <- length(f)
   if (t.sd <= 0) {
@@ -645,7 +645,7 @@ wiggle.gauss.dens <- function(f, t.mean, t.sd, f.scale)
 #' @param mean la valeur moyenne
 #' @param sd la valeur de l'écart type
 #' @export
-wiggle.gauss <- function(x, mean, sd)
+wiggle_gauss <- function(x, mean, sd)
 {
   out <- x
   for (i in length(x)) {
@@ -662,7 +662,7 @@ wiggle.gauss <- function(x, mean, sd)
 #' @param tmin la valeur moyenne
 #' @param tmax la valeur de l'écart type
 #' @export
-period.reduction <- function(dens, tmin=0, tmax=2000)
+period_reduction <- function(dens, tmin=0, tmax=2000)
 {
   if (tmax<= tmin) {
     warning("tmax<= tmin")
@@ -725,7 +725,7 @@ period.reduction <- function(dens, tmin=0, tmax=2000)
 #' @return une liste de data.frame
 #' @example 'curveI <- read.Ref("Calib/AM/GAL2002sph2014_I.ref")'
 #' @export
-read.Ref <- function(file.Ref, encoding = "macroman")
+read_ref <- function(file.Ref, encoding = "macroman")
 {
   # Lecture et extraction des points de la courbe
   # file.Ref="/Users/dufresne/Documents/AM/Croatie_Loron_Tar-Vabriga_2018/GAL2002sph2014_D.ref"
@@ -775,11 +775,11 @@ read.Ref <- function(file.Ref, encoding = "macroman")
   return(list)
 }
 
-#' Conversion une trace en datation pour l'utiliser avec les autres fonction du package
+#' Conversion une trace en densité datation pour l'utiliser avec les autres fonctions du package
 #' @param trace  un vecteur history plot provenant de ChronoModel
 #' @return une date par lissage avec un noyaux, gaussien par defaut
 #' @export
-trace.to.date <- function( trace,  bw = "nrd", adjust = 1, from, to, gridLength = 1024,
+trace_to_date <- function( trace,  bw = "nrd", adjust = 1, from, to, gridLength = 1024,
                            kernel = c("gaussian"),
                            ids = NULL, position = NULL)
 {
@@ -802,4 +802,27 @@ trace.to.date <- function( trace,  bw = "nrd", adjust = 1, from, to, gridLength 
   names(out) = ids
   class(out) = "RenDate"
   return(out)
+}
+
+#'  Random value between Unit.B and Unit.D
+#' $$tc  =  tb  +  Unif[0; 1] * ( td - tb )$$
+#'   OR 
+#' $$tc  =  Unif[tb; td]$$
+#' @param a  un vecteur, par exemple history plot provenant de ChronoModel
+#' @param b  un vecteur, par exemple history plot provenant de ChronoModel
+#' @return un vecteur
+#' @export
+pred_value <- function(a, b, seed ='NA') 
+{
+  #You have to set the random seed in order to get the same result each time. Use set.seed() to do so
+  if (!is.na(seed))
+    set.seed(seed)
+  
+  pred.value <- NULL
+  
+  for(i in 1:length(a)) {
+    pred.value <-c(pred.value, runif(n=1, min =a[i], max =b[i]))
+  }
+  
+  return(pred.value)
 }

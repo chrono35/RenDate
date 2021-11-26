@@ -3,9 +3,19 @@ title: "RenDate"
 author: "Ph Dufresne"
 date: "07/02/2020"
 output:
-  html_document: default
-  pdf_document: default
-  word_document: default
+  html_document:
+    toc: yes
+    toc_depth: 3
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+  word_document:
+    toc: yes
+    toc_depth: '3'
+    fig_width: 10
+    fig_height: 7
+    fig_caption: true
+  
 ---
 
 ```{r setup, include=FALSE}
@@ -222,63 +232,7 @@ hpd(tmp$Combinaison, prob = .95)
 plot(tmp)
 ```
 
-```{r fonction periodRedution, echo = FALSE, message=FALSE, warning=FALSE, include=TRUE}
-periodReduction <- function(dens, tmin=0, tmax=2000)
-{
-   if (tmax<= tmin) {
-    warning("tmax<= tmin")
-  }
-  
-  # boucle sur liste
-  res <- NULL
-  for(li in length(dens)) {
 
-      # recherche du imin
-    imatch <- match(tmax, dens[[li]]$timeGrid, nomatch = -1);
-    if ( imatch > -1 ) {
-      imin <-  which(dens[[li]]$timeGrid == tmin) 
-      
-    } else if (tmin < dens[[li]]$timeGrid[1] ) {
-        imin <- 1
-  
-    } else {
-      for(i in seq(from=length(dens[[li]]$timeGrid), to=1, by=-1))
-        if (tmin < dens[[li]]$timeGrid[i]) {
-          imin <- i
-        }
-          
-    }
-    
-    # recherche du imax
-    imatch <- match(tmax, dens[[li]]$timeGrid, nomatch = -1);
-    if ( imatch > -1 ) {
-      imax <-  which(dens[[li]]$timeGrid == tmax) 
-      
-    } else if (tmax > max(dens[[li]]$timeGrid) ) {
-        imax <- length(dens[[li]]$timeGrid) 
-        
-    } else {
-      for(i in seq(from=1, to=length(dens[[li]]$timeGrid), by=1))
-        if (tmax > dens[[li]]$timeGrid[i]) {
-          imax <- i
-        }
-    }
-  if (imax<= imin) {
-    warning("imax<= imin")
-  }
-    res[[li]]$timeScale <- dens[[li]]$timeScale
-    res[[li]]$timeGrid <- dens[[li]]$timeGrid[imin:imax]
-    res[[li]]$densities <- dens[[li]]$densities[imin:imax]
-    # Normalisation de la surface
-    res[[li]]$densities <-res[[li]]$densities /sum(res[[li]]$densities)
-    
-  }
-  names(res) = names(dens)
-  class(res) = "RenDate"
-  return(res)
-}
- 
-```
 
 # Wiggle Matching type Produit
 
@@ -331,6 +285,7 @@ date14C.1.shifted$C14$timeGrid <- date14C.1$C14$timeGrid + wiggle
 plot(periodReduction( date14C.1.shifted, 0, 1000), col = "blue", hdrCol = adjustcolor( "blue", alpha.f = 0.2), xlab=NA, main='Superposition',  normalize = TRUE,  yaxt="n")
 lines(periodReduction(date14C.2, 0, 1000), col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f = 0.2),  normalize = TRUE,  yaxt="n")
 ```
+
 ### Résultat wiggle
 ```{r produit wiggle}
 
@@ -379,20 +334,20 @@ date14C.9174 <- calibrate(mesures = 1690 , std = 15, calCurves = 'IntCal20_AD', 
 
 date14C.9175 <- calibrate(mesures = 1545 , std = 15, calCurves = 'IntCal20_AD',  ids = '9175', pathToCalCurves = paste0('./','data'), timeScale = 1)
 
-tmin <- 400
+tmin <- -400
 tmax <- 600
 xlim <- c(tmin, tmax)
 
 # date14C <- c(date14C, wiggle.uniform(date14C, 200, 200) )
 # class(date14C) = "RenDate"
 par( fig=c(0, 1, 0.70, 1), new=FALSE, mar=c(0, 5, 0.2, 0))
-plot(date14C.9175, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n")
+plot(date14C.9175, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n", ylab="ULA 9175")
 
 # Wiggle
 
-date14C.9174.wiggle <-  wiggle.uniform(date14C.9174, 130, 130)
+date14C.9174.wiggle <-  wiggle.uniform(date14C.9174, -400, -350 )
 par(fig=c(0, 1, 0.40, 0.70), new=TRUE, mar=c(0, 5, 0, 0))
-plot(date14C.9174, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n")
+plot(date14C.9174, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n", ylab="ULA 9174")
 lines(date14C.9174.wiggle, col ="red", xaxt="n")
 
 # Combinaison
@@ -450,13 +405,13 @@ tmax <- 600
 xlim <- c(tmin, tmax)
 
 par( fig=c(0, 1, 0.70, 1), new=FALSE, mar=c(0, 5, 0.2, 0))
-plot(date14C.9175, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n")
+plot(date14C.9175, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n", ylab="ULA 9175")
 
 # Wiggle
 
 date14C.9174.wiggle <-  wiggle.gauss(date14C.9174, 130, 10)
 par(fig=c(0, 1, 0.40, 0.70), new=TRUE, mar=c(0, 5, 0, 0))
-plot(date14C.9174, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n")
+plot(date14C.9174, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n", ylab="ULA 9174")
 lines(date14C.9174.wiggle, col ="red", xaxt="n")
 
 # Combinaison
@@ -492,13 +447,13 @@ tmax <- 600
 xlim <- c(tmin, tmax)
 
 par( fig=c(0, 1, 0.70, 1), new=FALSE, mar=c(0, 5, 0.2, 0))
-plot(date14C.9174, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n")
+plot(date14C.9174, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n", ylab="ULA 9174")
 
 # Wiggle
 
 date14C.9175.wiggle <-  wiggle.gauss(date14C.9175, -130, 10)
 par(fig=c(0, 1, 0.40, 0.70), new=TRUE, mar=c(0, 5, 0, 0))
-plot(date14C.9175, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n")
+plot(date14C.9175, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n", ylab="ULA 9175")
 lines(date14C.9175.wiggle, col ="red", xaxt="n")
 
 # Combinaison
@@ -558,21 +513,58 @@ read.Ref <- function(file.Ref, encoding = "macroman")
 }
 ```
 
+
 ```{r}
 test <- read.Ref("Calib/AM/GAL2002sph2014_I.ref")
 ```
 
-# test trouve valeur et erreur
-Le but est de faire une routine qui retrouve la valeur et l'erreur à partir d'une hpd
+# Creation d'une densité à partir d'une trace (vecteur de points)
+```{r importation 3f2 et 3c3}
+ Chain_IIIF2 <- read.csv2("~/Documents/ChronoModel-Projects/Lanos/ancor/results_2021-11-19/Chain_Phase_iII_f2.csv", comment.char="#")
+ Chain_IIIC3 <- read.csv2("~/Documents/ChronoModel-Projects/Lanos/ancor/results_2021-11-19/Chain_Phase_iii_c3.csv", comment.char="#")
+ density_IIIF2.begin<-trace.to.date(Chain_IIIF2$III.F2.Begin)
+ density_IIIC3.end<-trace.to.date(Chain_IIIC3$III.C3.End)
+```
+
+
+## Simulation d'une date entre 3F2 et 3C3
+
+Random value between Unit.B and Unit.D
+$$tc  =  tb  +  Unif[0; 1] * ( td - tb )$$
+OR 
+$$tc  =  Unif[tb; td]$$
+```{r}
+Chain_III <- pred.value(Chain_IIIF2$III.F2.End, Chain_IIIC3$III.C3.Begin, seed = 35)
+```
+
+
+
+
+# test trouve valeur et erreur d'un age 14C à partir du HPD
+Le but est de faire une routine qui retrouve la valeur (l'age) et l'erreur à partir d'une hpd
  - 1694 AD (28.1%) 1725 AD
 -1810 AD (67.4%) 1917 AD
+
+2eme test
+[1] "Resultat pour le 14C"
+$`86.5%`
+[1] -10684 -10426
+
+$`7.6%`
+[1] -10396 -10285
+
+$`0.8%`
+[1] -10250 -10232
+
+$`0.6%`
+[1] -10229 -10215
 
 ```{r trouve}
 time.step = 1
 
-find.tmin = 1694
-find.tmax = 1725
-confidence1 = 28.1
+find.tmin = -10684
+find.tmax = -10285
+confidence1 = 86.5
 
 #find
 m1 <- intCal20_AD[max(which(intCal20_AD$V1<=find.tmin) ), ]
@@ -605,9 +597,26 @@ for (m in seq(find.tmin, find.tmax, by=time.step)) {
  sqrt(var(tmTot) )
 ```
 
-```{r generation datations}
-v.min = 75
-v.max = 150
+```{r encadrement age min et age max}
+find.tmin = -10684
+find.tmax = 10285
+
+
+#find
+id.min = intCal20_AD$V1 > find.tmin
+id.max = intCal20_AD$V1 < find.tmax
+
+
+v.find <- intCal20_AD[id.max&id.min, 2]
+age.min <- min( v.find)
+age.max <- max( v.find)
+```
+
+
+```{r generation tableau de datations, eval= FALSE}
+# routine très longue
+v.min = age.min
+v.max = age.max
 v.step = 1
 
 
@@ -646,27 +655,34 @@ for (v in seq(v.min, v.max, by=v.step)) {
 
 ```
 
-```{r}
+```{r eval=FALSE}
 # Comparaison
 i.optimum <- NA
+C.optimum <- 1
 
-T1 = 1694
-T2 = 1725
-C1 = 28.1
-ecart1 <- 1
+#T1 = 1694
+#T2 = 1725
 
-C2 = 67.4
+C1 = 86.5
+ecart1 <- 3
+
+C2 = 7.6
 ecart2 <- 3
 
 str.res = NULL
 # comparaison des confiances
-for (i in 1:length(hpd.res)) {
-  for (j in 1:length(hpd.res[[i]]$conf)) {
+for (i in 1:(length(hpd.res)-1)) {
+  for (j in 1:length(hpd.res[[i]]$conf) ) {
+    
     if ( abs( hpd.res[[i]]$conf[j] - C1) <= ecart1 ) {
       str.res1 <-  paste0( i," ", j, " v=", hpd.res[[i]]$v[j], " err=",hpd.res[[i]]$err[j] , " conf", j,"=", hpd.res[[i]]$conf[j], "% ", hpd.res[[i]]$tmin[j], "-", hpd.res[[i]]$tmax[j]) 
     
         if ( (j+1<=length(hpd.res[[i]]$conf)) &&  ( abs( hpd.res[[i]]$conf[j+1] - C2) <= ecart2) ) {
-          str.res1 <-  paste0(str.res1, " conf", j+1, "=", hpd.res[[i]]$conf[j+1], "% ", hpd.res[[i]]$tmin[j+1], "-", hpd.res[[i]]$tmax[j+1]) 
+          str.res1 <-  paste0(str.res1, " conf", j+1, "=", hpd.res[[i]]$conf[j+1], "% ", hpd.res[[i]]$tmin[j+1], "-", hpd.res[[i]]$tmax[j+1])           
+          if (abs( hpd.res[[i]]$conf[j] - C1) * abs( hpd.res[[i]]$conf[j+1] - C2) <= C.optimum) { # Memo de la meilleur valeur
+              C.optimum <- abs( hpd.res[[i]]$conf[j] - C1) * abs( hpd.res[[i]]$conf[j+1] - C2)
+              i.optimum<- i
+            }
         }
       
     } 
@@ -677,6 +693,12 @@ for (i in 1:length(hpd.res)) {
      
         if ( (j-1>=1) &&  ( abs( hpd.res[[i]]$conf[j-1] - C1) <= ecart1) ) {
           str.res1 <-  paste0(str.res1, " conf", j-1, "=",  hpd.res[[i]]$conf[j-1], "% ", hpd.res[[i]]$tmin[j-1], "-", hpd.res[[i]]$tmax[j-1]) 
+          
+          if (abs( hpd.res[[i]]$conf[j-1] - C1) * abs( hpd.res[[i]]$conf[j] - C2) < C.optimum) { # Memo de la meilleur valeur
+              C.optimum <- abs( hpd.res[[i]]$conf[j-1] - C1) * abs( hpd.res[[i]]$conf[j] - C2)
+              i.optimum<- i
+            }
+          
         }
      
     } else {
@@ -687,12 +709,45 @@ for (i in 1:length(hpd.res)) {
   }
  
 }
-str.res
+# str.res
+#i.optimum
+hpd.res[[i.optimum]]
+print(paste0(str.res1, " Age =",  hpd.res[[i.optimum]]$v[1], " BC/AD err=", hpd.res[[i.optimum]]$err[1]))
+       
+for (i in 1:length(hpd.res[[i.optimum]]$conf)) {
+  print(paste0(str.res1, " conf", i, " -> ",  hpd.res[[i.optimum]]$conf[i], "% ", hpd.res[[i.optimum]]$tmin[i], "-", hpd.res[[i.optimum]]$tmax[i]) )
+}
 ```
 
 
+```{r exemple 14C}
+C14 <- 10506 #hpd.res[[i.optimum]]$v[1]
+errC14 <- 50 #hpd.res[[i.optimum]]$err[1]
+date14C <- calibrate(mesures = C14 ,std = errC14, calCurves = 'IntCal13_AD', ids = 'C14', timeScale = 1)
 
+# Tracé de la courbe 14C
+ # réduction de la période
+tmin <- -11000
+tmax <- 1950
+xlim <- c(tmin, tmax)
 
+# Il faut mettre des valeurs qui existent dans le tableau
+imin <- which(intCal13_AD$V1 == tmin)
+imax <- which(intCal13_AD$V1 == tmax)
+ylim <- range(intCal13_AD$V2[imin:imax] )
 
+par( fig=c(0, 1, 0.50, 1), mar=c(0, 5, 0, 1))
 
+courbe.enveloppe(t=intCal13_AD$V1, mean=intCal13_AD$V2, intCal13_AD$V3, ylab = '14C', xlab = NA,  xaxt = "n",
+                 xlim = xlim, ylim = ylim)
+mesure.enveloppe(intCal13_AD$V1, mesure = C14, std = errC14)
+text(intCal13_AD$V1[imin], C14, labels=as.character(C14) )
 
+par(fig=c(0, 1, 0.0, 0.50), new= TRUE, mar=c(5, 5, 0, 1) )
+
+plot(date14C, col = "blue", hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD',
+     xlim = xlim, yaxt="n")
+
+print('Resultat pour le 14C')
+hpd(date14C$C14, prob = .955)
+```
