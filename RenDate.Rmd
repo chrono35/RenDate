@@ -43,7 +43,7 @@ library("RenDate") #, lib.loc="/Library/Frameworks/R.framework/Versions/3.6/Reso
 ```
 
 ## Memo
-Quand on modifie le code , il faut penser à faire la documentation avec:
+Quand on modifie le code, il faut penser à faire la documentation avec:
 
 setwd("/Users/dufresne/Documents/R_Project/RenDate")
 devtools::document()
