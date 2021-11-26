@@ -289,18 +289,18 @@ lines(period_reduction(date14C.2, 0, 1000), col="forestgreen", hdrCol = adjustco
 ### Résultat wiggle
 ```{r produit wiggle}
 
-wiggleC14<- produit.RenDate(date14C.1.shifted, date14C.2, timeScale = .1)
+wiggleC14 <- produit(date14C.1.shifted, date14C.2, timeScale = .1)
 
 par(mfrow = c(2,1), mar=c(1, 5, 2, 0))
 tmin = 200
 tmax = 800
-xlim <- range(periodReduction(wiggleC14, tmin, tmax)$Combinaison$timeGrid)
-plot(periodReduction(date14C.2, tmin, tmax), col = "red", hdrCol = adjustcolor( "red", alpha.f = 0.2), xlab=NA, xlim = xlim, main='Superposition', normalize = TRUE,  yaxt="n", xaxt="n")
-lines(periodReduction(date14C.1.shifted, tmin, tmax), col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f = 0.2),  normalize = TRUE)
+xlim <- range(period_reduction(wiggleC14, tmin, tmax)$Combinaison$timeGrid)
+plot(period_reduction(date14C.2, tmin, tmax), col = "red", hdrCol = adjustcolor( "red", alpha.f = 0.2), xlab=NA, xlim = xlim, main='Superposition', normalize = TRUE,  yaxt="n", xaxt="n")
+lines(period_reduction(date14C.1.shifted, tmin, tmax), col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f = 0.2),  normalize = TRUE)
 
 par( mar=c(5, 5, 2, 0))
 val.hdr <- paste( hpd(wiggleC14$Combinaison, prob = .95), ' à 95% BC/AD' )
-plot(periodReduction(wiggleC14, tmin, tmax), withHDR = TRUE, main='Combine Wiggle', normalize = TRUE ,  yaxt="n", xlab="BC/AD")
+plot(period_reduction(wiggleC14, tmin, tmax), withHDR = TRUE, main='Combine Wiggle', normalize = TRUE ,  yaxt="n", xlab="BC/AD")
 #mtext(val.hdr, side = 1, col = 'red', line = 2)
 
 hpd(wiggleC14$Combinaison, prob = .954)
@@ -345,14 +345,14 @@ plot(date14C.9175, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alph
 
 # Wiggle
 
-date14C.9174.wiggle <-  wiggle.uniform(date14C.9174, -400, -350 )
+date14C.9174.wiggle <-  wiggle_uniform(date14C.9174, -400, -350 )
 par(fig=c(0, 1, 0.40, 0.70), new=TRUE, mar=c(0, 5, 0, 0))
 plot(date14C.9174, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n", ylab="ULA 9174")
 lines(date14C.9174.wiggle, col ="red", xaxt="n")
 
 # Combinaison
 
-D_Sequence <- produit.RenDate(date14C.9174.wiggle, date14C.9175, timeScale = date14C.9174.wiggle[[1]]$timeScale)
+D_Sequence <- produit(date14C.9174.wiggle, date14C.9175, timeScale = date14C.9174.wiggle[[1]]$timeScale)
 par(fig=c(0, 1, 0.0, 0.40), new=TRUE, mar=c(0, 5, 3, 0))
 plot(D_Sequence, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", ylab="Wiggle")
 
@@ -409,14 +409,14 @@ plot(date14C.9175, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alph
 
 # Wiggle
 
-date14C.9174.wiggle <-  wiggle.gauss(date14C.9174, 130, 10)
+date14C.9174.wiggle <-  wiggle_gauss(date14C.9174, 130, 10)
 par(fig=c(0, 1, 0.40, 0.70), new=TRUE, mar=c(0, 5, 0, 0))
 plot(date14C.9174, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n", ylab="ULA 9174")
 lines(date14C.9174.wiggle, col ="red", xaxt="n")
 
 # Combinaison
 
-V_Sequence <- produit.RenDate(date14C.9174.wiggle, date14C.9175, timeScale = date14C.9174.wiggle[[1]]$timeScale)
+V_Sequence <- produit(date14C.9174.wiggle, date14C.9175, timeScale = date14C.9174.wiggle[[1]]$timeScale)
 par(fig=c(0, 1, 0.0, 0.40), new=TRUE, mar=c(2, 5, 3, 0))
 plot(V_Sequence, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", ylab="Wiggle", xaxt=NULL)
 

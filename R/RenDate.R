@@ -604,7 +604,7 @@ wiggle_uniform <- function(x, wiggle.min, wiggle.max)
     wiggle.imin <- floor(min(wiggle.range))
     wiggle.imax <- floor(max(wiggle.range))
     
-    out[[i]]$densities <- wiggle.indice(x[[i]]$densities, wiggle.imin, wiggle.imax)
+    out[[i]]$densities <- wiggle_indice(x[[i]]$densities, wiggle.imin, wiggle.imax)
   }
   
   names(out) = paste("wiggle Uniforme [", wiggle.min, ";",  wiggle.max, "]", sep = "")
@@ -653,7 +653,7 @@ wiggle_gauss <- function(x, mean, sd)
 {
   out <- x
   for (i in length(x)) {
-    out[[i]]$densities <- wiggle.gauss.dens(x[[i]]$densities, mean, sd, x[[i]]$timeScale)
+    out[[i]]$densities <- wiggle_gauss_dens(x[[i]]$densities, mean, sd, x[[i]]$timeScale)
   }
   
   names(out) = paste("wiggle gauss [", mean, ";",  sd, "]", sep = "")
@@ -666,7 +666,7 @@ wiggle_gauss <- function(x, mean, sd)
 #' @param tmin la valeur moyenne
 #' @param tmax la valeur de l'écart type
 #' @export
-period_reduction <- function(dens, tmin=0, tmax=2000)
+period_reduction <- function(dens, tmin = 0, tmax = 2000)
 {
   if (tmax<= tmin) {
     warning("tmax<= tmin")
@@ -816,7 +816,7 @@ trace_to_date <- function( trace,  bw = "nrd", adjust = 1, from, to, gridLength 
 #' @param b  un vecteur, par exemple history plot provenant de ChronoModel
 #' @return un vecteur
 #' @export
-pred_value <- function(a, b, seed ='NA') 
+pred_value <- function(a, b, seed = NA) 
 {
   #You have to set the random seed in order to get the same result each time. Use set.seed() to do so
   if (!is.na(seed))

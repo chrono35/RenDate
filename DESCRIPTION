@@ -1,6 +1,6 @@
 Package: RenDate
 Title: Compute densities from calibrated curves with a mesure and an error
-Version: 1.0.3.0004
+Version: 1.0.3.0005
 Authors@R: 
     person(given = "Philippe", 
            family = "Dufresne",
