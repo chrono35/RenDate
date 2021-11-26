@@ -231,7 +231,7 @@ setGeneric("hpd", package = "RenDate", valueClass = "list",
 #' @param dateHeigth Fixe la hauteur des densités, quand withPositions est TRUE
 #' @param normalize force le maximum à la valeur 1
 #' @export
-plot.RenDate -> function(x, withPositions = FALSE, pause = FALSE, dateHeight = 30, normalize= FALSE, borderCol = NULL,
+plot.RenDate <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 30, normalize= FALSE, borderCol = NULL,
                          fillCols = rep('gray', length(x)), withHDR = TRUE, hdrCol = 'darkgray',
                          ...) {
   
@@ -352,7 +352,7 @@ plot.RenDate -> function(x, withPositions = FALSE, pause = FALSE, dateHeight = 3
 #' Trace des courbes de densité avec leurs enveloppes d erreur
 #' @param withHDR Calcul le hdr (hdp) et remplie la surface correspondant
 #' @export
-lines.RenDate -> function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, normalize = FALSE, borderCol = NULL,
+lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, normalize = FALSE, borderCol = NULL,
                           fillCols = rep('gray', length(x)), withHDR = TRUE, hdrCol = 'darkgray', 
                           ...) {
   
