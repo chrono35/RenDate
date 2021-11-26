@@ -225,13 +225,13 @@ setGeneric("hpd", package = "RenDate", valueClass = "list",
 )
 
 # PLOT ----
+
 #' Trace des courbe de densité
 #' @param withHDR Calcul le hdr (hpd) et remplie la surface correspondant
 #' @param dateHeigth Fixe la hauteur des densités, quand withPositions est TRUE
 #' @param normalize force le maximum à la valeur 1
 #' @export
-setGeneric("plot", package = "RenDate",
-  function(x, withPositions = FALSE, pause = FALSE, dateHeight = 30, normalize= FALSE, borderCol = NULL,
+plot.RenDate -> function(x, withPositions = FALSE, pause = FALSE, dateHeight = 30, normalize= FALSE, borderCol = NULL,
                          fillCols = rep('gray', length(x)), withHDR = TRUE, hdrCol = 'darkgray',
                          ...) {
   
@@ -347,13 +347,12 @@ setGeneric("plot", package = "RenDate",
     }
     
   }
-)
+
 
 #' Trace des courbes de densité avec leurs enveloppes d erreur
 #' @param withHDR Calcul le hdr (hdp) et remplie la surface correspondant
 #' @export
-setGeneric("lines", package = "RenDate",
-           function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, normalize = FALSE, borderCol = NULL,
+lines.RenDate -> function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, normalize = FALSE, borderCol = NULL,
                           fillCols = rep('gray', length(x)), withHDR = TRUE, hdrCol = 'darkgray', 
                           ...) {
   
@@ -464,8 +463,7 @@ setGeneric("lines", package = "RenDate",
       }
     }
     
-  }
-)
+}
 
 #' Trace une courbe avec son enveloppe d erreur à 1 sigma et deux sigma
 #' @export
@@ -542,6 +540,7 @@ setGeneric("produit", package = "RenDate",
   }
 )
 
+# WIGGLE ----
 # en utilisant, la fonction convole de R
 # les indices imin et imax sont relatifs, c.à.d qu'ils peuvent être négatifs ou nulles
 wiggle_indice <- function(f, imin, imax)
