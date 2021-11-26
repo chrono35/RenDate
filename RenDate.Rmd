@@ -111,9 +111,9 @@ ylim <- range(intCal13_AD$V2[imin:imax] )
 
 par( fig=c(0, 1, 0.50, 1), mar=c(0, 5, 0, 1))
 
-courbe.enveloppe(t=intCal13_AD$V1, mean=intCal13_AD$V2, intCal13_AD$V3, ylab = '14C', xlab = NA,  xaxt = "n",
+courbe_enveloppe(t=intCal13_AD$V1, mean=intCal13_AD$V2, intCal13_AD$V3, ylab = '14C', xlab = NA,  xaxt = "n",
                  xlim = xlim, ylim = ylim)
-mesure.enveloppe(intCal13_AD$V1, mesure = C14, std = errC14)
+mesure_enveloppe(intCal13_AD$V1, mesure = C14, std = errC14)
 text(intCal13_AD$V1[imin], C14, labels=as.character(C14) )
 
 par(fig=c(0, 1, 0.0, 0.50), new= TRUE, mar=c(5, 5, 0, 1) )
@@ -153,13 +153,13 @@ dateDec1 <- calibrate(mesures = DParis , std = errDec, calCurves='GAL2002sph2014
  par(cex=0.7)
 # Tracé de la courbe Inclinaison
 par( fig=c(0, 1, 0.70, 1), new=FALSE, mar=c(0, 5, 0.2, 0))
-courbe.enveloppe(GAL2002sph2014_I$V1, GAL2002sph2014_I$V2, GAL2002sph2014_I$V3, ylab='Inclinaison', xlab=NA,  xaxt="n", col.env = "blue")
-mesure.enveloppe(GAL2002sph2014_I$V1, mesure = IParis, std = errInc) 
+courbe_enveloppe(GAL2002sph2014_I$V1, GAL2002sph2014_I$V2, GAL2002sph2014_I$V3, ylab='Inclinaison', xlab=NA,  xaxt="n", col.env = "blue")
+mesure_enveloppe(GAL2002sph2014_I$V1, mesure = IParis, std = errInc) 
 text(GAL2002sph2014_I$V1[1], IParis, labels=as.character(IParis) )
 # Tracé de la courbe Déclinaison
 par(fig=c(0, 1, 0.40, 0.70), new=TRUE, mar=c(0, 5, 0, 0))
-courbe.enveloppe(GAL2002sph2014_D$V1, GAL2002sph2014_D$V2, GAL2002sph2014_D$V3, ylab='Declinaison', xlab=NA, xaxt="n" )
-mesure.enveloppe(GAL2002sph2014_D$V1, mesure = DParis, std = errDec) 
+courbe_enveloppe(GAL2002sph2014_D$V1, GAL2002sph2014_D$V2, GAL2002sph2014_D$V3, ylab='Declinaison', xlab=NA, xaxt="n" )
+mesure_enveloppe(GAL2002sph2014_D$V1, mesure = DParis, std = errDec) 
 text(GAL2002sph2014_D$V1[1], DParis, labels=as.character(DParis) )
 
 # Tracé de la superposition des deux densités obtenues
@@ -178,7 +178,7 @@ lines(dateDec1, col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f 
 # Combinaison AM
 
 ```{r produit AM}
-combiAM<- produit.RenDate(dateInc1, dateDec1, timeScale = 1)
+combiAM<- produit(dateInc1, dateDec1, timeScale = 1)
 
 par(mfrow = c(2,1), mar=c(1, 5, 2, 0))
 
@@ -269,8 +269,8 @@ wiggle = 130
 
 ```{r visu}
 
-plot(periodReduction( date14C.1, 0, 1000), col = "blue", hdrCol = adjustcolor( "blue", alpha.f = 0.2), xlab=NA, main='Superposition',  normalize = TRUE,  yaxt="n")
-lines(periodReduction(date14C.2, 0, 1000), col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f = 0.2),  normalize = TRUE,  yaxt="n")
+plot(period_reduction( date14C.1, 0, 1000), col = "blue", hdrCol = adjustcolor( "blue", alpha.f = 0.2), xlab=NA, main='Superposition',  normalize = TRUE,  yaxt="n")
+lines(period_reduction(date14C.2, 0, 1000), col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f = 0.2),  normalize = TRUE,  yaxt="n")
 ```
 
 ### Calcul de la densité shiftée
@@ -282,8 +282,8 @@ date14C.1.shifted$C14$timeGrid <- date14C.1$C14$timeGrid + wiggle
 ```
 
 ```{r visu densities shifted}
-plot(periodReduction( date14C.1.shifted, 0, 1000), col = "blue", hdrCol = adjustcolor( "blue", alpha.f = 0.2), xlab=NA, main='Superposition',  normalize = TRUE,  yaxt="n")
-lines(periodReduction(date14C.2, 0, 1000), col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f = 0.2),  normalize = TRUE,  yaxt="n")
+plot(period_reduction( date14C.1.shifted, 0, 1000), col = "blue", hdrCol = adjustcolor( "blue", alpha.f = 0.2), xlab=NA, main='Superposition',  normalize = TRUE,  yaxt="n")
+lines(period_reduction(date14C.2, 0, 1000), col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f = 0.2),  normalize = TRUE,  yaxt="n")
 ```
 
 ### Résultat wiggle
