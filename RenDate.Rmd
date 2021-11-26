@@ -197,7 +197,7 @@ hpd(combiAM$Combinaison, prob = .95)
 
 ```{r produit AM et C14}
 
-combiAMC14<- produit.RenDate(combiAM, date14C, timeScale = 0.1)
+combiAMC14<- produit(combiAM, date14C, timeScale = 0.1)
 
 par(mfrow = c(2,1), mar=c(1, 5, 2, 0))
 
