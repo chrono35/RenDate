@@ -50,6 +50,8 @@ createCalCurve = function(name,
 
 # Il faut dégrader la fonction BchronCalibrate pour autoriser le passage de valeurs décimales. Il faut aussi corriger la formule
 
+
+#' @title calibrate
 #' @description {Fonction qui permet le calcul de la densité de probabilté d'une date}
 #' @param mesures mesure ou liste des mesures à calibrer
 #' @param std erreur ou liste des erreurs sur les mesures à calibrer
@@ -125,6 +127,7 @@ calibrate <- function (mesures, std, calCurves, ids = NULL, positions = NULL,   
   return(out)
 }
 
+#' @title date_uniform
 #' @description {Fonction qui permet le calcul de la densité de probabilté de date uniforme - fonction porte}
 #' @param gate.min début de la porte
 #' @param gate.max fin de la porte
@@ -174,6 +177,8 @@ date_gaussian <- function( mean = 0, sd = 10, time.grid.min = -1000, time.grid.m
   return(out)
 }
 # HPD ----
+
+#' @title hpd
 #' @description {Calcul le hpd (hdr) sur une densité de probabilité de date}
 #' @param date densité produite par la fonction calibrate, générant un objet de class "RenDate" 
 #' @param prob requested surface value [0, 1]
@@ -223,23 +228,32 @@ setGeneric("hpd", package = "RenDate", valueClass = "list",
   
 }
 )
+
+## MAP ----
+#' @title MAP
 #' @description {Retourne le temps correspondant au maximum d'une densité de date}
 #' @param date densité de date de class "RenDate" 
 #' @examples  g_dat <- date_gaussian( mean = 20, sd = 3, time.grid.scale = .5)
 #' @examples  'max(g_dat$`N(20;3)`))'
 #' @export
-MAP.RenDate<-function(date)
+setGeneric("MAP", package = "RenDate", valueClass = "list",
+function(date)
 {
   date$timeGrid[which(date$densities == max(date$densities))]
 }
+)
 
+## quantile ----
+
+#' @title quantile
 #' @description {Retourne le temps correspondant à la ou aux quantiles juste supérieures ou égale d'une densité de date.}
 #' @param date densité de date de class "RenDate" 
 #' @param  prob quantiles  default prob = c(0.25, 0.5, 0.75)
 #' @examples  'g_dat <- date_gaussian( mean = 20, sd = 3, time.grid.scale = .5)'
-#' @examples  'RenDate.quantile(g_dat[[1]])'
+#' @examples  'quantile(g_dat[[1]])'
 #' @export
-RenDate.quantile<-function(date, prob = c(0.25, 0.5, 0.75))
+setGeneric("quantile", package = "RenDate", valueClass = "list",
+function(date, prob = c(0.25, 0.5, 0.75))
 {
   prob.sort <- sort(prob)
   
@@ -258,10 +272,11 @@ RenDate.quantile<-function(date, prob = c(0.25, 0.5, 0.75))
   }
   return(out)
 }
-
+)
 
 # PLOT ----
 
+#' @title plot
 #' @description {Trace des courbe de densité.}
 #' @param withHDR Calcul le hdr (hpd) et remplie la surface correspondant
 #' @param dateHeigth Fixe la hauteur des densités, quand withPositions est TRUE
@@ -379,6 +394,7 @@ plot.RenDate <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 3
   }
 
 
+#' @title lines
 #' @description {Trace des courbes de densité avec leurs enveloppes d erreur.}
 #' @param withHDR Calcul le hdr (hdp) et remplie la surface correspondant
 #' @export
@@ -495,6 +511,7 @@ lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, 
     
 }
 
+#' @title courbe_enveloppe
 #' @description {Trace une courbe avec son enveloppe d erreur à 1 sigma et deux sigma.}
 #' @export
 courbe_enveloppe <- function(t, mean, std, col.env = "forestgreen",  xlim = NULL, ylim = NULL, new = TRUE,...)
@@ -523,6 +540,8 @@ courbe_enveloppe <- function(t, mean, std, col.env = "forestgreen",  xlim = NULL
   )
   
 }
+
+#' @title mesure_enveloppe
 #' @description {Trace une droite représentant une mesure avec son enveloppe d erreur à 1 sigma et deux sigma.}
 #' @export
 mesure_enveloppe <- function(t, mesure, std, col.env = "gray",  col.mesure = "darkgray", ...)
@@ -536,7 +555,9 @@ mesure_enveloppe <- function(t, mesure, std, col.env = "gray",  col.mesure = "da
   
   
 }
+
 #  Produit ----
+#' @title produit
 #' @description {Calcul la combinaison au sens produit de deux densités de class "RenDate"}
 #' @param timeScale permet de modifier la grille de temps
 #' @export
@@ -617,6 +638,7 @@ wiggle_indice <- function(f, imin, imax)
   return(conv)
 }
 
+#' @title wiggle_uniform
 #' @description {Calcul le wiggle (décalage) d'une densité de class "RenDate"
 #' Fonction utilisée avec produit.RenDate() pour calculer le "Wiggle Matching"
 #' Il s'agit d'un poroduit de convolution de la datation par une "fonction porte"}
