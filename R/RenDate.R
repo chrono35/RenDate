@@ -236,7 +236,7 @@ setGeneric("hpd", package = "RenDate", valueClass = "list",
 #' @examples  g_dat <- date_gaussian( mean = 20, sd = 3, time.grid.scale = .5)
 #' @examples  'max(g_dat$`N(20;3)`))'
 #' @export
-setGeneric("MAP", package = "RenDate", valueClass = "list",
+setGeneric("MAP", package = "RenDate", valueClass = "numeric",
 function(date)
 {
   date$timeGrid[which(date$densities == max(date$densities))]
