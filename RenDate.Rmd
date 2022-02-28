@@ -3,19 +3,19 @@ title: "RenDate"
 author: "Ph Dufresne"
 date: "07/02/2020"
 output:
-  html_document:
-    toc: yes
-    toc_depth: 3
+  
   pdf_document:
     toc: yes
     toc_depth: '3'
+  html_document:
+    toc: yes
+    toc_depth: 3
   word_document:
     toc: yes
     toc_depth: '3'
     fig_width: 10
     fig_height: 7
     fig_caption: true
-  
 ---
 
 ```{r setup, include=FALSE}
@@ -167,11 +167,22 @@ par(fig=c(0, 1, 0.0, 0.40), new=TRUE, mar=c(5, 5, 3, 0))
 plot(dateInc1, col = "blue", hdrCol = adjustcolor( "blue", alpha.f = 0.2), main="Densités superposées", xlab='BC/AD', yaxt="n" )
 lines(dateDec1, col="forestgreen", hdrCol = adjustcolor( "forestgreen", alpha.f = 0.2))
 
-#print('Resultat pour l inclinaison')
-#hpd(dateInc1$Inclinaison, prob = .95 )
+```
 
-#print('Resultat pour la declinaison')
-#my_hdr =hpd(dateDec1$Declinaison, prob = .95)
+# Statistique sur une datation
+## Recherche du MAP
+```{r}
+MAP(date14C$C14)
+```
+
+## Recherche des Quantiles
+```{r}
+quantile(date14C$C14)
+```
+
+## Recherche du HPD
+```{r}
+hpd(date14C$C14)
 ```
 
 
@@ -451,14 +462,14 @@ plot(date14C.9174, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alph
 
 # Wiggle
 
-date14C.9175.wiggle <-  wiggle.gauss(date14C.9175, -130, 10)
+date14C.9175.wiggle <-  wiggle_gauss(date14C.9175, -130, 10)
 par(fig=c(0, 1, 0.40, 0.70), new=TRUE, mar=c(0, 5, 0, 0))
 plot(date14C.9175, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", xaxt="n", ylab="ULA 9175")
 lines(date14C.9175.wiggle, col ="red", xaxt="n")
 
 # Combinaison
 
-V_Sequence <- produit.RenDate(date14C.9175.wiggle, date14C.9174, timeScale = date14C.9174.wiggle[[1]]$timeScale)
+V_Sequence <- produit(date14C.9175.wiggle, date14C.9174, timeScale = date14C.9174.wiggle[[1]]$timeScale)
 par(fig=c(0, 1, 0.0, 0.40), new=TRUE, mar=c(2, 5, 3, 0))
 plot(V_Sequence, col = "blue", xlim = xlim, hdrCol = adjustcolor( "blue", alpha.f = 0.2), main = NA, xlab ='BC/AD', yaxt="n", ylab="Wiggle", xaxt=NULL)
 
@@ -520,21 +531,22 @@ test <- read.Ref("Calib/AM/GAL2002sph2014_I.ref")
 
 # Creation d'une densité à partir d'une trace (vecteur de points)
 ```{r importation 3f2 et 3c3}
- Chain_IIIF2 <- read.csv2("~/Documents/ChronoModel-Projects/Lanos/ancor/results_2021-11-19/Chain_Phase_iII_f2.csv", comment.char="#")
- Chain_IIIC3 <- read.csv2("~/Documents/ChronoModel-Projects/Lanos/ancor/results_2021-11-19/Chain_Phase_iii_c3.csv", comment.char="#")
- density_IIIF2.begin<-trace.to.date(Chain_IIIF2$III.F2.Begin)
- density_IIIC3.end<-trace.to.date(Chain_IIIC3$III.C3.End)
+ Chain_A <- read.csv2("~/Documents/R_Project/RenDate/Chain_A.csv", comment.char="#")
+ Chain_B <- read.csv2("~/Documents/R_Project/RenDate/Chain_B.csv", comment.char="#")
+ density_A.end <-trace_to_date(Chain_A$End)
+ density_B.begin <-trace_to_date(Chain_B$Begin)
 ```
 
 
-## Simulation d'une date entre 3F2 et 3C3
+# Simulation d'une date entre 3F2 et 3C3
 
 Random value between Unit.B and Unit.D
 $$tc  =  tb  +  Unif[0; 1] * ( td - tb )$$
 OR 
 $$tc  =  Unif[tb; td]$$
 ```{r}
-Chain_III <- pred.value(Chain_IIIF2$III.F2.End, Chain_IIIC3$III.C3.Begin, seed = 35)
+Chain_III <- pred_value(Chain_A$End, Chain_B$Begin)
+plot(trace_to_date(Chain_III))
 ```
 
 
@@ -738,9 +750,9 @@ ylim <- range(intCal13_AD$V2[imin:imax] )
 
 par( fig=c(0, 1, 0.50, 1), mar=c(0, 5, 0, 1))
 
-courbe.enveloppe(t=intCal13_AD$V1, mean=intCal13_AD$V2, intCal13_AD$V3, ylab = '14C', xlab = NA,  xaxt = "n",
+courbe_enveloppe(t=intCal13_AD$V1, mean=intCal13_AD$V2, intCal13_AD$V3, ylab = '14C', xlab = NA,  xaxt = "n",
                  xlim = xlim, ylim = ylim)
-mesure.enveloppe(intCal13_AD$V1, mesure = C14, std = errC14)
+mesure_enveloppe(intCal13_AD$V1, mesure = C14, std = errC14)
 text(intCal13_AD$V1[imin], C14, labels=as.character(C14) )
 
 par(fig=c(0, 1, 0.0, 0.50), new= TRUE, mar=c(5, 5, 0, 1) )

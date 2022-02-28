@@ -10,7 +10,7 @@
 #  http://www.r-project.org/Licenses/
 #  _________________________________________________________________________________
 
-# Version 2021-11-26
+# Version 2022-02-28
 #
 
 #' RenDate; inspiré du package Bchron (https://cran.r-project.org/web/packages/Bchron/index.html) développé par Andrew Parnell <Andrew.Parnell at mu.ie>, 
@@ -20,10 +20,10 @@
 #' est modifié pour pouvoir l'utiliser avec des mesures magnétiques, ou d'autres sortes de mesures nécessitants des valeurs décimales
 #' @author "Philippe DUFRESNE"
 #' @name RenDate
-#' @docType package
 
-#' Stocke une courbe dans le répertoire / data
-#' Cette fonction est utilisée avec la fonction calibrate
+
+#' @description {Stocke une courbe dans le répertoire / data
+#' Cette fonction est utilisée avec la fonction calibrate}
 #' @seealso \cite{\code{calibrate} }
 #' @export
 createCalCurve = function(name,
@@ -50,7 +50,7 @@ createCalCurve = function(name,
 
 # Il faut dégrader la fonction BchronCalibrate pour autoriser le passage de valeurs décimales. Il faut aussi corriger la formule
 
-#' Fonction qui permet le calcul de la densité de probabilté d'une date
+#' @description {Fonction qui permet le calcul de la densité de probabilté d'une date}
 #' @param mesures mesure ou liste des mesures à calibrer
 #' @param std erreur ou liste des erreurs sur les mesures à calibrer
 #' @param timeScale pas de la grille de temps
@@ -125,7 +125,7 @@ calibrate <- function (mesures, std, calCurves, ids = NULL, positions = NULL,   
   return(out)
 }
 
-#' Fonction qui permet le calcul de la densité de probabilté de date uniforme - fonction porte
+#' @description {Fonction qui permet le calcul de la densité de probabilté de date uniforme - fonction porte}
 #' @param gate.min début de la porte
 #' @param gate.max fin de la porte
 #' @param timeGrid.min valeur minimale de la grille
@@ -137,10 +137,10 @@ date_uniform <- function( gate.min = -0, gate.max = 100, time.grid.min = -1000, 
 {
   out = list()
   timeGrid <- seq(time.grid.min, time.grid.max, by = time.grid.scale)
-  dens  <- dunif(timeGrid, min = gate.min, max = gate.max)
-  
+  dens <- dunif(timeGrid, min = gate.min, max = gate.max)
+  som <- sum(dens)
   out[[1]] = list(gate.min = gate.min, gate.max = gate.max, 
-                  calCurves = NA, timeGrid = timeGrid, densities = dens,
+                  calCurves = NA, timeGrid = timeGrid, densities = dens/som,
                   positions = position, timeScale = time.grid.scale)
   
   if (is.null(ids)) 
@@ -163,8 +163,8 @@ date_gaussian <- function( mean = 0, sd = 10, time.grid.min = -1000, time.grid.m
   out = list()
   timeGrid <- seq(time.grid.min, time.grid.max, by = time.grid.scale)
   dens  <- dnorm(timeGrid, mean = mean, sd=sd)
-  
-  out[[1]] = list(calCurves = NA, timeGrid = timeGrid, densities = dens,
+  som <- sum(dens)
+  out[[1]] = list(calCurves = NA, timeGrid = timeGrid, densities = dens*time/som,
                   positions = position, timeScale = time.grid.scale)
   
   if (is.null(ids)) 
@@ -174,7 +174,7 @@ date_gaussian <- function( mean = 0, sd = 10, time.grid.min = -1000, time.grid.m
   return(out)
 }
 # HPD ----
-#' Calcul le hpd (hdr) sur une densité de probabilité de date
+#' @description {Calcul le hpd (hdr) sur une densité de probabilité de date}
 #' @param date densité produite par la fonction calibrate, générant un objet de class "RenDate" 
 #' @param prob requested surface value [0, 1]
 #' @export
@@ -223,10 +223,46 @@ setGeneric("hpd", package = "RenDate", valueClass = "list",
   
 }
 )
+#' @description {Retourne le temps correspondant au maximum d'une densité de date}
+#' @param date densité de date de class "RenDate" 
+#' @examples  g_dat <- date_gaussian( mean = 20, sd = 3, time.grid.scale = .5)
+#' @examples  'max(g_dat$`N(20;3)`))'
+#' @export
+MAP.RenDate<-function(date)
+{
+  date$timeGrid[which(date$densities == max(date$densities))]
+}
+
+#' @description {Retourne le temps correspondant à la ou aux quantiles juste supérieures ou égale d'une densité de date.}
+#' @param date densité de date de class "RenDate" 
+#' @param  prob quantiles  default prob = c(0.25, 0.5, 0.75)
+#' @examples  'g_dat <- date_gaussian( mean = 20, sd = 3, time.grid.scale = .5)'
+#' @examples  'RenDate.quantile(g_dat[[1]])'
+#' @export
+RenDate.quantile<-function(date, prob = c(0.25, 0.5, 0.75))
+{
+  prob.sort <- sort(prob)
+  
+  cs <- cumsum(date$densities)
+  max.cs <- cs[length(cs)]
+  # Store output
+  out = vector('list', length = length(prob))
+  i <- 1
+  for (p in 1: length(cs)) {
+    if ( i<=length(prob) && cs[p]/max.cs >= prob.sort[i] ) {
+      names(out)[[i]] <- paste0(as.character(cs[p]*100/max.cs),'%')
+      out[[i]] <-date$timeGrid[p]
+      i<- i+1 
+    }
+    
+  }
+  return(out)
+}
+
 
 # PLOT ----
 
-#' Trace des courbe de densité
+#' @description {Trace des courbe de densité.}
 #' @param withHDR Calcul le hdr (hpd) et remplie la surface correspondant
 #' @param dateHeigth Fixe la hauteur des densités, quand withPositions est TRUE
 #' @param normalize force le maximum à la valeur 1
@@ -262,9 +298,7 @@ plot.RenDate <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 3
       if(withHDR) {
         my_hdr = hpd(x[[1]])
         for(j in 1:length(my_hdr)) {
-          #x_seq = seq(my_hdr[[j]][1], my_hdr[[j]][2], by = 1)
-          #y_lookup = match(x_seq, ag)
-          #y_seq = den[y_lookup]
+
           y_lookup <- match(my_hdr[[j]], ag)
           x_seq <- ag[y_lookup[1]: y_lookup[2]]
           y_seq = den[y_lookup[1]: y_lookup[2]]
@@ -300,11 +334,7 @@ plot.RenDate <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 3
         if(withHDR) {
           my_hdr = hpd(x[[i]])
           for(j in 1:length(my_hdr)) {
-            #x_seq = seq(my_hdr[[j]][1], my_hdr[[j]][2], by = 1)
-            #y_lookup = match(x_seq, ag)
-            #y_seq = den[y_lookup]
-            
-            y_lookup <- match(my_hdr[[j]], ag)
+             y_lookup <- match(my_hdr[[j]], ag)
             x_seq <- ag[y_lookup[1]: y_lookup[2]]
             y_seq = den[y_lookup[1]: y_lookup[2]]
             graphics::polygon(c(my_hdr[[j]][1], x_seq, my_hdr[[j]][2]),
@@ -349,7 +379,7 @@ plot.RenDate <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 3
   }
 
 
-#' Trace des courbes de densité avec leurs enveloppes d erreur
+#' @description {Trace des courbes de densité avec leurs enveloppes d erreur.}
 #' @param withHDR Calcul le hdr (hdp) et remplie la surface correspondant
 #' @export
 lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, normalize = FALSE, borderCol = NULL,
@@ -465,7 +495,7 @@ lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, 
     
 }
 
-#' Trace une courbe avec son enveloppe d erreur à 1 sigma et deux sigma
+#' @description {Trace une courbe avec son enveloppe d erreur à 1 sigma et deux sigma.}
 #' @export
 courbe_enveloppe <- function(t, mean, std, col.env = "forestgreen",  xlim = NULL, ylim = NULL, new = TRUE,...)
 {
@@ -493,7 +523,7 @@ courbe_enveloppe <- function(t, mean, std, col.env = "forestgreen",  xlim = NULL
   )
   
 }
-#' Trace une droite représentant une mesure avec son enveloppe d erreur à 1 sigma et deux sigma
+#' @description {Trace une droite représentant une mesure avec son enveloppe d erreur à 1 sigma et deux sigma.}
 #' @export
 mesure_enveloppe <- function(t, mesure, std, col.env = "gray",  col.mesure = "darkgray", ...)
 {
@@ -507,7 +537,7 @@ mesure_enveloppe <- function(t, mesure, std, col.env = "gray",  col.mesure = "da
   
 }
 #  Produit ----
-#' Calcul la combinaison au sens produit de deux densités de class "RenDate"
+#' @description {Calcul la combinaison au sens produit de deux densités de class "RenDate"}
 #' @param timeScale permet de modifier la grille de temps
 #' @export
 setGeneric("produit", package = "RenDate",
@@ -587,9 +617,9 @@ wiggle_indice <- function(f, imin, imax)
   return(conv)
 }
 
-#' Calcul le wiggle (décalage) d'une densité de class "RenDate"
+#' @description {Calcul le wiggle (décalage) d'une densité de class "RenDate"
 #' Fonction utilisée avec produit.RenDate() pour calculer le "Wiggle Matching"
-#' Il s'agit d'un poroduit de convolution de la datation par une "fonction porte"
+#' Il s'agit d'un poroduit de convolution de la datation par une "fonction porte"}
 #' @param x une densité (datation) de class "RenDate"
 #' @param wiggle.min la borne inférieure du décalage
 #' @param wiggle.max la borne supérieure du décalage
@@ -611,8 +641,8 @@ wiggle_uniform <- function(x, wiggle.min, wiggle.max)
   return(out)
 }
 
-# Calcul de wiggle Matching en utilisant, la fonction convole() de R
-# fonction utilisée dans le wiggle.gauss
+# @description {Calcul de wiggle Matching en utilisant, la fonction convole() de R
+# fonction utilisée dans le wiggle.gauss}
 wiggle_gauss_dens <- function(f, t.mean, t.sd, f.scale)
 {
   f.len <- length(f)
@@ -625,7 +655,7 @@ wiggle_gauss_dens <- function(f, t.mean, t.sd, f.scale)
   xmax <- f.len + xmin
   x <- seq(xmin/f.scale, xmax/f.scale, length.out = f.len)
   
-  wiggle.gauss.f <- dnorm(x, t.mean, t.sd)
+  wiggle.gauss.f <- dnorm(x, t.mean/f.scale^2, t.sd/f.scale^2)
   
   if (max(wiggle.gauss.f) == 0) {
     warning("Time scale too hight, no possible convolution")
@@ -727,7 +757,7 @@ period_reduction <- function(dens, tmin = 0, tmax = 2000)
 #' Lecture d'un fichier de référence
 #' @param encoding  Pour les fichiers du MacOS, il faut "macroman" -> difficle à connaitre, peut être "latin1" ou "utf8".
 #' @return une liste de data.frame
-#' @example 'curveI <- read.Ref("Calib/AM/GAL2002sph2014_I.ref")'
+#' @examples 'curveI <- read.Ref("Calib/AM/GAL2002sph2014_I.ref")'
 #' @export
 read_ref <- function(file.Ref, encoding = "macroman")
 {
@@ -779,7 +809,7 @@ read_ref <- function(file.Ref, encoding = "macroman")
   return(list)
 }
 
-#' Conversion une trace en densité datation pour l'utiliser avec les autres fonctions du package
+#' Conversion d'une trace en densité datation pour utilisation avec les autres fonctions du package
 #' @param trace  un vecteur history plot provenant de ChronoModel
 #' @return une date par lissage avec un noyaux, gaussien par defaut
 #' @export

@@ -15,3 +15,6 @@ une liste de data.frame
 \description{
 Lecture d'un fichier de référence
 }
+\examples{
+'curveI <- read.Ref("Calib/AM/GAL2002sph2014_I.ref")'
+}

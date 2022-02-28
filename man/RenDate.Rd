@@ -18,11 +18,8 @@ createCalCurve(
 )
 }
 \description{
-RenDate; inspiré du package Bchron (https://cran.r-project.org/web/packages/Bchron/index.html) développé par Andrew Parnell <Andrew.Parnell at mu.ie>, 
-( Haslett J, Parnell AC (2008). “A simple monotone process with application to radiocarbon-dated depth chronologies.” 
-Journal of the Royal Statistical Society: Series C (Applied Statistics), 57(4), 399–418.
- http://onlinelibrary.wiley.com/doi/10.1111/j.1467-9876.2008.00623.x/full. )
-est modifié pour pouvoir l'utiliser avec des mesures magnétiques, ou d'autres sortes de mesures nécessitants des valeurs décimales
+{Stocke une courbe dans le répertoire / data
+Cette fonction est utilisée avec la fonction calibrate}
 }
 \seealso{
 \cite{\code{calibrate} }

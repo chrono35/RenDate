@@ -2,6 +2,8 @@
 
 S3method(lines,RenDate)
 S3method(plot,RenDate)
+export(MAP.RenDate)
+export(RenDate.quantile)
 export(calibrate)
 export(courbe_enveloppe)
 export(createCalCurve)

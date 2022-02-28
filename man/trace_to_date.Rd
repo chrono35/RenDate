@@ -2,7 +2,7 @@
 % Please edit documentation in R/RenDate.R
 \name{trace_to_date}
 \alias{trace_to_date}
-\title{Conversion une trace en densité datation pour l'utiliser avec les autres fonctions du package}
+\title{Conversion d'une trace en densité datation pour utilisation avec les autres fonctions du package}
 \usage{
 trace_to_date(
   trace,
@@ -23,5 +23,5 @@ trace_to_date(
 une date par lissage avec un noyaux, gaussien par defaut
 }
 \description{
-Conversion une trace en densité datation pour l'utiliser avec les autres fonctions du package
+Conversion d'une trace en densité datation pour utilisation avec les autres fonctions du package
 }

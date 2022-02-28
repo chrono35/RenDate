@@ -7,7 +7,7 @@ $$tc  =  tb  +  Unif[0; 1] * ( td - tb )$$
   OR 
 $$tc  =  Unif[tb; td]$$}
 \usage{
-pred_value(a, b, seed = "NA")
+pred_value(a, b, seed = NA)
 }
 \arguments{
 \item{a}{un vecteur, par exemple history plot provenant de ChronoModel}
