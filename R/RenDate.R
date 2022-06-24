@@ -229,19 +229,17 @@ setGeneric("hpd", package = "RenDate", valueClass = "list",
 }
 )
 
-## MAP ----
-#' @title MAP
+## map ----
+#' @title map
 #' @description {Retourne le temps correspondant au maximum d'une densité de date}
 #' @param date densité de date de class "RenDate" 
 #' @examples  g_dat <- date_gaussian( mean = 20, sd = 3, time.grid.scale = .5)
 #' @examples  'max(g_dat$`N(20;3)`))'
 #' @export
-setGeneric("MAP", package = "RenDate", valueClass = "numeric",
-function(date)
+map<-function(date)
 {
   date$timeGrid[which(date$densities == max(date$densities))]
 }
-)
 
 ## quantile ----
 
