@@ -1,6 +1,6 @@
 #  Licence ----
 #
-#  Copyright or © or Copr. CNRS	2021
+#  Copyright or © or Copr. CNRS	2022
 #
 #
 # This package is under
@@ -10,7 +10,7 @@
 #  http://www.r-project.org/Licenses/
 #  _________________________________________________________________________________
 
-# Version 2022-02-28
+# Version 2022-06-24
 #
 
 #' RenDate; inspiré du package Bchron (https://cran.r-project.org/web/packages/Bchron/index.html) développé par Andrew Parnell <Andrew.Parnell at mu.ie>, 
