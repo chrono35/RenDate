@@ -2,12 +2,26 @@
 % Please edit documentation in R/RenDate.R
 \name{courbe_enveloppe}
 \alias{courbe_enveloppe}
-\title{courbe_enveloppe}
+\alias{curve_envelope}
+\title{courbe_enveloppe / curve_envelope}
 \usage{
 courbe_enveloppe(
   t,
   mean,
   std,
+  k = 2.54,
+  col.env = "forestgreen",
+  xlim = NULL,
+  ylim = NULL,
+  new = TRUE,
+  ...
+)
+
+curve_envelope(
+  t,
+  mean,
+  std,
+  k = 2.54,
   col.env = "forestgreen",
   xlim = NULL,
   ylim = NULL,
@@ -15,6 +29,35 @@ courbe_enveloppe(
   ...
 )
 }
+\arguments{
+\item{t}{Vecteur des temps}
+
+\item{mean}{Vecteur des moyennes}
+
+\item{std}{Vecteur des erreurs standards (écarts-types)}
+
+\item{k}{facteur multiplacteur e = k * sigma pour la 2ème enveloppe, par defaut k = 2,54 c'est à dire 99 % de confiance}
+
+\item{col.env}{Couleur de l'enveloppe d'erreur (défaut : "forestgreen")}
+
+\item{xlim}{Limites de l'axe des x (optionnel)}
+
+\item{ylim}{Limites de l'axe des y (optionnel)}
+
+\item{new}{Si `TRUE`, crée un nouveau graphique ; sinon ajoute au graphique courant}
+
+\item{...}{Arguments additionnels passés à `plot` ou `lines`}
+}
+\value{
+Un graphique est généré avec la courbe moyenne et ses enveloppes d’erreur.
+}
 \description{
-{Trace une courbe avec son enveloppe d erreur à 1 sigma et deux sigma.}
+Trace une courbe moyenne avec son enveloppe d'erreur à ±1 sigma et ±2.54 sigma.
+}
+\details{
+Cette fonction trace une courbe moyenne ainsi que deux enveloppes d'incertitude :
+- une première à ±1 sigma (semi-transparente)
+- une seconde plus large à ±2.54 sigma (intervalle large)
+
+Elle est utile pour représenter visuellement une tendance et son incertitude dans le temps.
 }

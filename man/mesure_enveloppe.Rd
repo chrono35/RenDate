@@ -2,7 +2,8 @@
 % Please edit documentation in R/RenDate.R
 \name{mesure_enveloppe}
 \alias{mesure_enveloppe}
-\title{mesure_enveloppe}
+\alias{envelope_measure}
+\title{mesure_enveloppe / envelope_measure}
 \usage{
 mesure_enveloppe(
   t,
@@ -12,7 +13,32 @@ mesure_enveloppe(
   col.mesure = "darkgray",
   ...
 )
+
+envelope_measure(
+  t,
+  mesure,
+  std,
+  col.env = "gray",
+  col.mesure = "darkgray",
+  ...
+)
+}
+\arguments{
+\item{t}{Vecteur des temps}
+
+\item{mesure}{Valeur de la mesure (centrale)}
+
+\item{std}{Erreur standard associée à la mesure}
+
+\item{col.env}{Couleur de l'enveloppe d'erreur}
+
+\item{col.mesure}{Couleur de la ligne de la mesure}
+
+\item{...}{Arguments additionnels passés à `polygon` ou `abline`}
+}
+\value{
+Un tracé est produit sur le graphique courant.
 }
 \description{
-{Trace une droite représentant une mesure avec son enveloppe d erreur à 1 sigma et deux sigma.}
+Trace une droite représentant une mesure avec son enveloppe d'erreur à 1 sigma et 2 sigma.
 }

@@ -2,10 +2,7 @@
 % Please edit documentation in R/RenDate.R
 \name{pred_value}
 \alias{pred_value}
-\title{Random value between Unit.B and Unit.D
-$$tc  =  tb  +  Unif[0; 1] * ( td - tb )$$
-  OR 
-$$tc  =  Unif[tb; td]$$}
+\title{pred_value}
 \usage{
 pred_value(a, b, seed = NA)
 }

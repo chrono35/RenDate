@@ -2,7 +2,7 @@
 % Please edit documentation in R/RenDate.R
 \name{read_ref}
 \alias{read_ref}
-\title{Lecture d'un fichier de référence}
+\title{read_ref}
 \usage{
 read_ref(file.Ref, encoding = "macroman")
 }
