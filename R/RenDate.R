@@ -1,6 +1,6 @@
 #  Licence ----
 #
-#  Copyright or © or Copr. CNRS	2022
+#  Copyright or © or Copr. CNRS	2025
 #
 #
 # This package is under
@@ -10,20 +10,28 @@
 #  http://www.r-project.org/Licenses/
 #  _________________________________________________________________________________
 
-# Version 2022-06-24
+# Version 2025-07-01
 #
 
-#' RenDate; inspiré du package Bchron (https://cran.r-project.org/web/packages/Bchron/index.html) développé par Andrew Parnell <Andrew.Parnell at mu.ie>, 
+#' @author "Philippe DUFRESNE"
+#' @docType package
+#' 
+#' @importFrom grDevices adjustcolor
+#' @importFrom graphics abline lines polygon rect
+#' @importFrom methods .valueClassTest new
+#' @importFrom stats convolve density dunif runif sd
+#' @importFrom utils read.table setTxtProgressBar txtProgressBar
+
+
+#' 
+#' @title createCalCurve
+#' @description {Stocke une courbe dans le répertoire / data
+#' Cette fonction est utilisée avec la fonction calibrate.
+#' Inspiré du package Bchron (https://cran.r-project.org/web/packages/Bchron/index.html) développé par Andrew Parnell <Andrew.Parnell at mu.ie>, 
 #' ( Haslett J, Parnell AC (2008). “A simple monotone process with application to radiocarbon-dated depth chronologies.” 
 #' Journal of the Royal Statistical Society: Series C (Applied Statistics), 57(4), 399–418.
-#'  http://onlinelibrary.wiley.com/doi/10.1111/j.1467-9876.2008.00623.x/full. )
-#' est modifié pour pouvoir l'utiliser avec des mesures magnétiques, ou d'autres sortes de mesures nécessitants des valeurs décimales
-#' @author "Philippe DUFRESNE"
-#' @name RenDate
-
-
-#' @description {Stocke une courbe dans le répertoire / data
-#' Cette fonction est utilisée avec la fonction calibrate}
+#'  https://onlinelibrary.wiley.com/doi/10.1111/j.1467-9876.2008.00623.x/full. )
+#' est modifié pour pouvoir l'utiliser avec des mesures magnétiques, ou d'autres sortes de mesures nécessitants des valeurs décimales}
 #' @seealso \cite{\code{calibrate} }
 #' @export
 createCalCurve = function(name,
@@ -127,6 +135,216 @@ calibrate <- function (mesures, std, calCurves, ids = NULL, positions = NULL,   
   return(out)
 }
 
+#' @title calibrate_uniform
+#' @description {Fonction qui permet le calcul de la densité de probabilté d'une date, à partir d'une mesure avec une densité de probabilité uniforme}
+#' @param measure.min valeur basse de mesure ou liste des mesures à calibrer
+#' @param measure.max valeur haute de mesure ou liste des valeurs à calibrer
+#' @param timeScale pas de la grille de temps
+#' @export
+calibrate_uniform <- function (measure.min, measure.max, calCurves, ids = NULL, positions = NULL, 
+                               pathToCalCurves = paste0(getwd(), "/", "data"), timeScale = 1) 
+{
+  # Vérifications des paramètres d'entrée
+  if (length(measure.min) != length(measure.max)) 
+    stop("tmin and tmax should be of same length")
+  if (length(measure.min) != length(calCurves)) 
+    stop("tmin and calCurves should be of same length")
+  if (!is.null(positions)) 
+    if (length(measure.min) != length(positions)) 
+      stop("tmin and positions should be of same length")
+  if (is.null(ids)) 
+    ids = paste("Date", 1:length(measure.min), sep = "")
+  
+  # Vérification que tmin < tmax pour chaque mesure
+  if (any(measure.min >= measure.max))
+    stop("All tmin values must be strictly less than corresponding tmax values")
+  
+  allCalCurves = unique(calCurves)
+  calCurve = calTime = calValue = calStd = timeGrid = mu = tau1 = list()
+  
+  # Chargement des courbes de calibration
+  for (i in 1:length(allCalCurves)) {
+    calCurveFile = paste(pathToCalCurves, "/", allCalCurves[i], 
+                         ".rda", sep = "")
+    if (!file.exists(calCurveFile)) 
+      stop(paste("Calibration curve file", calCurveFile, 
+                 "not found"))
+    x = load(calCurveFile)
+    calCurve = get(x)
+    calTime[[i]] = calCurve[, 1]
+    calValue[[i]] = calCurve[, 2]
+    calStd[[i]] = calCurve[, 3]
+    timeGrid[[i]] = seq(min(calTime[[i]]), max(calTime[[i]]), 
+                        by = timeScale)
+    mu[[i]] = stats::approx(calTime[[i]], calValue[[i]], 
+                            xout = timeGrid[[i]], rule = 2)$y
+    tau1[[i]] = stats::approx(calTime[[i]], calStd[[i]], 
+                              xout = timeGrid[[i]], rule = 2)$y
+    
+    # Gestion du cas "normal" (pas de calibration)
+    if (allCalCurves[i] == "normal") {
+      timeRange = range(c(calTime, measure.min, measure.max))
+      timeGrid[[i]] = seq(timeRange[1], timeRange[2], by = timeScale)
+      mu[[i]] = timeGrid[[i]]
+      tau1[[i]] = rep(0, length(timeGrid[[i]]))
+    }
+  }
+  
+  matchCalCurves = match(calCurves, allCalCurves)
+  out = list()
+  
+  # Calibration pour chaque mesure uniforme
+  for (i in 1:length(tmin)) {
+    # Vérification que l'intervalle [tmin, tmax] chevauche avec la courbe de calibration
+    cal_range = range(mu[[matchCalCurves[i]]])
+    if (measure.max[i] < cal_range[1] | measure.min[i] > cal_range[2]) {
+      warning(paste("Date", ids[i], "outside of calibration range. Range of", 
+                    calCurves[i], "is", cal_range[1], "to", cal_range[2]))
+    }
+    
+    currTimeGrid = timeGrid[[matchCalCurves[i]]]
+    dens <- NULL
+    
+    # Calcul de la densité pour chaque point de la grille temporelle
+    for (j in 1:length(currTimeGrid)) {
+      t_cal = currTimeGrid[j]  # temps calibré
+      mu_val = mu[[matchCalCurves[i]]][j]  # valeur moyenne de la courbe de calibration
+      sigma_cal = tau1[[matchCalCurves[i]]][j]  # incertitude de la courbe de calibration
+      
+      # Pour une mesure uniforme entre tmin et tmax, on calcule l'intégrale
+      # de la densité gaussienne de la courbe de calibration sur [tmin, tmax]
+      if (sigma_cal > 0) {
+        # Intégrale de la gaussienne N(mu_val, sigma_cal²) sur [measure.min[i], measure.max[i]]
+        p_lower = stats::pnorm(measure.min[i], mean = mu_val, sd = sigma_cal)
+        p_upper = stats::pnorm(measure.max[i], mean = mu_val, sd = sigma_cal)
+        dens[j] = p_upper - p_lower
+      } else {
+        # Cas où sigma_cal = 0 (courbe de calibration parfaite)
+        if (mu_val >= measure.min[i] & mu_val <= measure.max[i]) {
+          dens[j] = 1
+        } else {
+          dens[j] = 0
+        }
+      }
+    }
+    
+    # Normalisation de la densité
+    if (sum(dens) > 0) {
+      dens = dens / sum(dens)
+    } else {
+      warning(paste("No overlap between uniform interval [", measure.min[i], ",", measure.max[i], 
+                    "] and calibration curve for", ids[i]))
+      dens = rep(1/length(dens), length(dens))  # Distribution uniforme par défaut
+    }
+    
+    # Stockage des résultats
+    out[[i]] = list(
+      measure.min = measure.min[i], 
+      measure.max = measure.max[i], 
+      calCurves = calCurves[i], 
+      timeGrid = currTimeGrid, 
+      densities = dens, 
+      positions = if(!is.null(positions)) positions[i] else NULL, 
+      timeScale = timeScale
+    )
+  }
+  
+  names(out) = ids
+  class(out) = "RenDate"
+  return(out)
+}
+
+#' @title approx_uncalibrate
+#' @description Approximation de l'opération de **"décalibration"** : reconstitue la densité de mesure à partir d'une densité calibrée (`RenDate`), en inversant le modèle d'observation par pseudo-inversion matricielle.
+#' @param calibrated_result Un objet de classe `RenDate`, typiquement produit par une calibration
+#' @param grid_size Taille de la grille des mesures simulées (nombre de points)
+#' @param tmin Optionnel : limite inférieure de la courbe de calibration à utiliser (en calBP)
+#' @param tmax Optionnel : limite supérieure de la courbe de calibration à utiliser (en calBP)
+#' @param show_progress Affiche une barre de progression si `TRUE` (par défaut)
+#' @return Une liste de type `UncalibratedMeasure` contenant, pour chaque date, la grille des mesures, la densité estimée des mesures, la courbe utilisée, et la densité calibrée d’origine
+#' @details
+#' Cette fonction approxime l'inversion du processus de calibration, en utilisant la pseudo-inverse de la matrice de convolution entre les densités calibrées et la courbe de calibration.
+#' Elle suppose que la calibration a été effectuée à l’aide d’une courbe sous forme de fichier `.rda` dans le dossier `data/`, contenant une matrice à trois colonnes (année calBP, mu, sigma).
+#' 
+#' L’estimation peut être bruitée et doit être interprétée avec prudence. Elle est utile à des fins exploratoires ou pédagogiques.
+#' @importFrom MASS ginv
+#' @importFrom stats approx dnorm
+#' @export
+approx_uncalibrate <- function(calibrated_result, grid_size = 100,
+                               tmin = NULL, tmax = NULL,
+                               show_progress = TRUE) {
+  
+  if (!inherits(calibrated_result, "RenDate")) {
+    stop("calibrated_result must be of class 'RenDate'")
+  }
+  
+  n_dates <- length(calibrated_result)
+  result <- vector("list", n_dates)
+  
+  if (show_progress) {
+    pb <- txtProgressBar(min = 0, max = n_dates, style = 3)
+  }
+  
+  for (i in seq_along(calibrated_result)) {
+    date_data <- calibrated_result[[i]]
+    time_grid <- date_data$timeGrid
+    calibrated_density <- date_data$densities
+    cal_curve_file <- paste0("data/", date_data$calCurves, ".rda")
+    
+    x <- load(cal_curve_file)
+    cal_curve <- get(x)
+    
+    if (!is.null(tmin)) {
+      cal_curve <- cal_curve[cal_curve[, 1] >= tmin, , drop = FALSE]
+    }
+    if (!is.null(tmax)) {
+      cal_curve <- cal_curve[cal_curve[, 1] <= tmax, , drop = FALSE]
+    }
+    
+    if (nrow(cal_curve) < 2) {
+      stop(paste("Courbe de calibration vide ou insuffisante après filtrage tmin/tmax pour", date_data$calCurves))
+    }
+    
+    mu <- approx(cal_curve[, 1], cal_curve[, 2], xout = time_grid, rule = 2)$y
+    sigma <- approx(cal_curve[, 1], cal_curve[, 3], xout = time_grid, rule = 2)$y
+    
+    measure_grid <- seq(min(mu) - 4 * max(sigma), max(mu) + 4 * max(sigma), length.out = grid_size)
+    
+    M <- outer(measure_grid, seq_along(time_grid), Vectorize(function(m, j) {
+      dnorm(m, mean = mu[j], sd = sigma[j])
+    }))
+    M <- t(M)
+    
+    M_norm <- M / rowSums(M + 1e-10)
+    M_pinv <- MASS::ginv(M_norm)
+    
+    measure_density <- M_pinv %*% calibrated_density
+    measure_density[measure_density < 0] <- 0
+    measure_density <- measure_density / sum(measure_density)
+    
+    result[[i]] <- list(
+      measure_grid = measure_grid,
+      measure_density = as.vector(measure_density),
+      calCurves = date_data$calCurves,
+      original_calibrated = calibrated_density
+    )
+    
+    if (show_progress) {
+      setTxtProgressBar(pb, i)
+    }
+  }
+  
+  if (show_progress) {
+    close(pb)
+  }
+  
+  names(result) <- names(calibrated_result)
+  class(result) <- "UncalibratedMeasure"
+  return(result)
+}
+
+
+
 #' @title date_uniform
 #' @description {Fonction qui permet le calcul de la densité de probabilté de date uniforme - fonction porte}
 #' @param gate.min début de la porte
@@ -167,7 +385,7 @@ date_gaussian <- function( mean = 0, sd = 10, time.grid.min = -1000, time.grid.m
   timeGrid <- seq(time.grid.min, time.grid.max, by = time.grid.scale)
   dens  <- dnorm(timeGrid, mean = mean, sd=sd)
   som <- sum(dens)
-  out[[1]] = list(calCurves = NA, timeGrid = timeGrid, densities = dens*time/som,
+  out[[1]] = list(calCurves = NA, timeGrid = timeGrid, densities = dens/som,
                   positions = position, timeScale = time.grid.scale)
   
   if (is.null(ids)) 
@@ -176,6 +394,9 @@ date_gaussian <- function( mean = 0, sd = 10, time.grid.min = -1000, time.grid.m
   class(out) = "RenDate"
   return(out)
 }
+
+
+
 # HPD ----
 
 #' @title hpd
@@ -509,50 +730,140 @@ lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, 
     
 }
 
-#' @title courbe_enveloppe
-#' @description {Trace une courbe avec son enveloppe d erreur à 1 sigma et deux sigma.}
+#' @title courbe_enveloppe / curve_envelope
+#' @description Trace une courbe moyenne avec son enveloppe d'erreur à ±1 sigma et ±2.54 sigma.
+#' @param t Vecteur des temps
+#' @param mean Vecteur des moyennes
+#' @param std Vecteur des erreurs standards (écarts-types)
+#' @param k facteur multiplacteur e = k * sigma pour la 2ème enveloppe, par défaut k = 2.54 (soit 99 % de confiance)
+#' @param col.env Couleur de l'enveloppe d'erreur (défaut : "forestgreen")
+#' @param xlim Limites de l'axe des x (optionnel)
+#' @param ylim Limites de l'axe des y (optionnel)
+#' @param new Si `TRUE`, crée un nouveau graphique ; sinon ajoute au graphique courant
+#' @param ... Arguments additionnels passés à `plot` ou `lines`
+#
+#'#' @details
+#' Cette fonction trace une courbe moyenne ainsi que deux enveloppes d'incertitude :
+#' 
+#' - **±1 sigma** : Enveloppe étroite (semi-transparente).
+#' - **±k sigma** : Enveloppe plus large, par défaut k = 2.54 (environ 99 % de confiance).
+#' 
+#' Elle est utile pour représenter visuellement une tendance et son incertitude dans le temps.
+#'
+#' @return Un graphique est généré avec la courbe moyenne et ses enveloppes d'erreur.
 #' @export
-courbe_enveloppe <- function(t, mean, std, col.env = "forestgreen",  xlim = NULL, ylim = NULL, new = TRUE,...)
-{
-  enveloppe1 <- mean + outer(std , c(1, -1))
-  
-  enveloppe2 <- mean + outer(std , c(2.54, -2.54)) 
+courbe_enveloppe <- function(t, mean, std, k = 2.54, col.env = "forestgreen", xlim = NULL, ylim = NULL, new = TRUE, ...) {
+  enveloppe1 <- mean + outer(std, c(1, -1))
+  enveloppe2 <- mean + outer(std, c(k, -k))
   
   if (is.null(ylim))
     ylim <- range(enveloppe2)
   
-  if(new == TRUE) {
+  if (new == TRUE) {
     plot(
-      x=t, y=mean, type="l", ylim = ylim,
-      panel.first=polygon(c(t, rev(t)), c(enveloppe2[,1], rev(enveloppe2[,2])), border=NA, col=adjustcolor( col.env, alpha.f = 0.2)), xlim=xlim,  ...=... 
+      x = t, y = mean, type = "l", ylim = ylim, xlim = xlim,
+      panel.first = polygon(c(t, rev(t)), c(enveloppe2[,1], rev(enveloppe2[,2])),
+                            border = NA, col = adjustcolor(col.env, alpha.f = 0.2)),
+      ...
     )
   } else {
-    lines(x = t , y=mean,
-          panel.first=polygon(c(t, rev(t)), c(enveloppe2[,1], rev(enveloppe2[,2])), border=NA, col=adjustcolor( col.env, alpha.f = 0.2))
-    )
+    lines(x = t, y = mean,
+          panel.first = polygon(c(t, rev(t)), c(enveloppe2[,1], rev(enveloppe2[,2])),
+                                border = NA, col = adjustcolor(col.env, alpha.f = 0.2)))
   }
   
-  
-  lines(x = t , y=mean,
-        panel.first=polygon(c(t, rev(t)), c(enveloppe1[,1], rev(enveloppe1[,2])), border=NA, col=adjustcolor( col.env, alpha.f = 0.3))
+  lines(x = t, y = mean,
+        panel.first = polygon(c(t, rev(t)), c(enveloppe1[,1], rev(enveloppe1[,2])),
+                              border = NA, col = adjustcolor(col.env, alpha.f = 0.3)))
+}
+
+#' @rdname courbe_enveloppe
+#' @export
+curve_envelope <- courbe_enveloppe
+
+
+#' @title mesure_enveloppe / envelope_measure
+#' @description Trace une droite représentant une mesure avec son enveloppe d'erreur à 1 sigma et 2 sigma.
+#' @param t Vecteur des temps
+#' @param mesure Valeur de la mesure (centrale)
+#' @param std Erreur standard associée à la mesure
+#' @param col.env Couleur de l'enveloppe d'erreur
+#' @param col.mesure Couleur de la ligne de la mesure
+#' @param ... Arguments additionnels passés à `polygon` ou `abline`
+#' @return Un tracé est produit sur le graphique courant.
+#' @export
+mesure_enveloppe <- function(t, mesure, std, col.env = "gray", col.mesure = "darkgray", ...) {
+  abline(h = mesure, col = col.mesure)
+  polygon(
+    c(t[1], t[1], t[length(t)], t[length(t)]),
+    c(mesure + 1.96 * std, mesure - 1.96 * std, mesure - 1.96 * std, mesure + 1.96 * std),
+    border = NA,
+    col = adjustcolor(col.env, alpha.f = 0.3)
   )
+  polygon(
+    c(t[1], t[1], t[length(t)], t[length(t)]),
+    c(mesure + std, mesure - std, mesure - std, mesure + std),
+    border = NA,
+    col = adjustcolor(col.env, alpha.f = 0.3)
+  )
+}
+
+#' @rdname mesure_enveloppe
+#' @export
+envelope_measure <- mesure_enveloppe
+
+
+#' @title plot_gaussian_measure
+#' @description {Trace verticalement une mesure gaussienne.}
+#' @param mean valeur moyenne de la gaussienne
+#' @param sd ecart type
+#' @param k facteur fixe la distance à la moyenne du dessin min = mean - k*sd, et max = mean + k*sd
+#' @param size taille horizontal de la gaussienne en unité du graph
+#' @param x.min position de la base de la gaussienne en unité du graph
+#' @param normalized force la densité à avoir un maximum à 1 * size, sinon c'est la surface qui est égale à 1
+#' @export
+plot_gaussian_measure <- function(mean = 0, sd = 1, k = 5,  x.min = 0, size = 10,  col = "skyblue", border = NA, normalized = TRUE, new = F)
+{
+  
+  x <- seq(mean - k*sd, mean + k*sd, length.out=100)
+  y <- dnorm(x, mean, sd)
+  if (normalized) {
+    y <- y/max(y) * size
+  }
+  y <- y * size 
+  
+  # Tracer la gaussienne verticalement avec remplissage
+  polygon(c(x.min, y + x.min, x.min), c(min(x), x, min(x)), col = col, border = border, new = new)
   
 }
 
-#' @title mesure_enveloppe
-#' @description {Trace une droite représentant une mesure avec son enveloppe d erreur à 1 sigma et deux sigma.}
+
+#' @title plot_square_measure
+#' @description {Trace verticalement une mesure rectangulaire. porte}
+#' @param min valeur basse de la mesure
+#' @param max valeur haute de la mesure
+#' @param size taille horizontal de la gaussienne en unité du graph
+#' @param x.min position de la base de la gaussienne en unité du graph
+#' @param normalized force la densité à avoir un maximum à 1 * size, sinon c'est la surface qui est égale à 1
 #' @export
-mesure_enveloppe <- function(t, mesure, std, col.env = "gray",  col.mesure = "darkgray", ...)
+plot_square_measure <- function(min = 50, max = 100,   x.min = 0, size = 10,  col = "skyblue", border = NA, normalized = TRUE)
 {
-  abline(h= mesure, col = col.mesure )
- 
- # text(t[1], mesure, labels=as.character(mesure) )
-  # enveloppe sur la mesure
-  polygon( c(t[1], t[1], t[length(t)], t[length(t)] ), c(mesure + 2.54*std, mesure - 2.54*std,  mesure - 2.54*std,  mesure + 2.54*std), border=NA, col=adjustcolor(col.env, alpha.f = 0.3))
-  polygon( c(t[1], t[1], t[length(t)], t[length(t)] ), c(mesure + std, mesure - std,  mesure - std,  mesure + std), border=NA, col=adjustcolor( col.env, alpha.f = 0.3))
+  x <- seq(min, max, length.out=100)
+  y <- dunif(x, min, max)
+  if (normalized) {
+    y <- y/max(y) * size
+  }
+  y <- y * size 
   
+  # Calculer la largeur du rectangle
+  width <- max(x) - min(x)
+  
+  # Tracer le rectangle
+  rect(x.min, min, x.min + max(y), max, col = col, border = border)
   
 }
+
+
 
 #  Produit ----
 #' @title produit
@@ -774,7 +1085,8 @@ period_reduction <- function(dens, tmin = 0, tmax = 2000)
 
 # si on a l'erreur : la chaîne de caractères entrée 1 est incorrecte dans cet environnement linguistique
 # cela correspond au mauvais encoding
-#' Lecture d'un fichier de référence
+#' @title read_ref
+#' @description Lecture d'un fichier de référence
 #' @param encoding  Pour les fichiers du MacOS, il faut "macroman" -> difficle à connaitre, peut être "latin1" ou "utf8".
 #' @return une liste de data.frame
 #' @examples 'curveI <- read.Ref("Calib/AM/GAL2002sph2014_I.ref")'
@@ -829,8 +1141,11 @@ read_ref <- function(file.Ref, encoding = "macroman")
   return(list)
 }
 
-#' Conversion d'une trace en densité datation pour utilisation avec les autres fonctions du package
+#' @title trace_to_date
+#' @description
+#'  Conversion d'une trace (un vecteur de valeurs) en densité datation pour utilisation avec les autres fonctions du package
 #' @param trace  un vecteur history plot provenant de ChronoModel
+#' @param bw bandwidth
 #' @return une date par lissage avec un noyaux, gaussien par defaut
 #' @export
 trace_to_date <- function( trace,  bw = "nrd", adjust = 1, from, to, gridLength = 1024,
@@ -858,7 +1173,8 @@ trace_to_date <- function( trace,  bw = "nrd", adjust = 1, from, to, gridLength 
   return(out)
 }
 
-#'  Random value between Unit.B and Unit.D
+#' @title pred_value
+#' @description  Random value between Unit.B and Unit.D
 #' $$tc  =  tb  +  Unif[0; 1] * ( td - tb )$$
 #'   OR 
 #' $$tc  =  Unif[tb; td]$$
@@ -880,3 +1196,164 @@ pred_value <- function(a, b, seed = NA)
   
   return(pred.value)
 }
+
+# 14C F14C D14C convertion ----
+# CRA = Conventional Radiocarbone Age
+# F14C = Fraction of Modern (Reimer et al (2004))
+# errF14C correspond à l'erreur sur F14C
+# Attention D14C : per cent Modern. C'est différent de delta14C
+
+# F14C <-> CRA
+
+#' @title F14C to CRA
+#' @description Conversion de la fraction moderne (F14C) en CRA (Conventional Radiocarbon Age)
+#' @param F14C Fraction moderne
+#' @return Âge radiocarbone conventionnel (CRA)
+#' @export
+F14CtoCRA <- function(F14C) {
+  -8033 * log(F14C)
+}
+
+#' @title Erreur F14C vers erreur CRA
+#' @description Propagation de l'erreur de F14C vers l'erreur en CRA
+#' @param F14C Fraction moderne
+#' @param errF14C Erreur associée à F14C
+#' @return Erreur sur l'âge CRA
+#' @export
+errF14CtoErrCRA <- function(F14C, errF14C) {
+  -8033 * log(F14C - errF14C) + 8033 * log(F14C)
+}
+
+#' @title CRA to F14C
+#' @description Conversion d'un âge radiocarbone (CRA) en fraction moderne (F14C)
+#' @param CRA Âge radiocarbone conventionnel
+#' @return Fraction moderne F14C
+#' @export
+CRAtoF14C <- function(CRA) {
+  exp(-CRA / 8033)
+}
+
+#' @title Erreur CRA vers erreur F14C
+#' @description Propagation de l'erreur du CRA vers F14C
+#' @param CRA Âge radiocarbone
+#' @param errCRA Erreur sur le CRA
+#' @return Erreur sur F14C
+#' @export
+errCRAtoErrF14C <- function(CRA, errCRA) {
+  exp(-CRA / 8033) - exp(-(CRA + errCRA) / 8033)
+}
+
+#' @title D14C to F14C
+#' @description Conversion de Delta 14C (‰) vers F14C
+#' @param D14C Delta 14C en pour mille (‰)
+#' @return Fraction moderne F14C
+#' @export
+D14CtoF14C <- function(D14C) {
+  D14C / 1000 + 1
+}
+
+#' @title Erreur D14C vers erreur F14C
+#' @description Conversion de l'erreur sur Delta 14C vers erreur sur F14C
+#' @param errD14C Erreur sur Delta 14C (‰)
+#' @return Erreur sur F14C
+#' @export
+errD14CtoErrF14C <- function(errD14C) {
+  errD14C / 1000
+}
+
+#' @title F14C to D14C
+#' @description Conversion de F14C vers Delta 14C (‰)
+#' @param F14C Fraction moderne
+#' @return Delta 14C en pour mille (‰)
+#' @export
+F14CtoD14C <- function(F14C) {
+  (F14C - 1) * 1000
+}
+
+#' @title Erreur F14C vers erreur D14C
+#' @description Conversion de l'erreur sur F14C vers erreur sur D14C
+#' @param errF14C Erreur sur F14C
+#' @return Erreur sur D14C (‰)
+#' @export
+errF14CtoErrD14C <- function(errF14C) {
+  errF14C * 1000
+}
+
+#' @title CRA to D14C
+#' @description Conversion d'un âge radiocarbone en Delta 14C
+#' @param CRA Âge radiocarbone
+#' @return Delta 14C (‰)
+#' @export
+CRAtoD14C <- function(CRA) {
+  (exp(-CRA / 8033) - 1) * 1000
+}
+
+#' @title Erreur CRA vers erreur D14C
+#' @description Propagation de l'erreur du CRA vers D14C
+#' @param CRA Âge radiocarbone
+#' @param errCRA Erreur sur le CRA
+#' @return Erreur sur Delta 14C
+#' @export
+errCRAtoErrD14C <- function(CRA, errCRA) {
+  (exp(-CRA / 8033) - exp(-(CRA + errCRA) / 8033)) * 1000
+}
+
+#' @title D14C to CRA
+#' @description Conversion de Delta 14C en âge radiocarbone (CRA)
+#' @param D14C Delta 14C
+#' @return CRA (âge radiocarbone)
+#' @export
+D14CtoCRA <- function(D14C) {
+  -8033 * log(D14C / 1000 + 1)
+}
+
+#' @title Erreur D14C vers erreur CRA
+#' @description Propagation d'erreur de D14C vers CRA
+#' @param errD14C Erreur sur Delta 14C
+#' @param D14C Valeur de Delta 14C
+#' @return Erreur sur CRA
+#' @export
+errD14CtoErrCRA <- function(errD14C, D14C) {
+  -8033 * log((D14C / 1000 + 1) - errD14C / 1000) + 8033 * log(D14C / 1000 + 1)
+}
+
+#' @title Delta14C to F14C in BC
+#' @description Conversion de Delta14C en F14C pour une date avant 1950 (en années BC)
+#' @param delta14C Delta 14C (‰)
+#' @param Year.BC Année avant 1950 (BC)
+#' @return F14C ajusté pour une date BC
+#' @export
+delta14CtoF14C.inBC <- function(delta14C, Year.BC) {
+  ((delta14C / 1000) + 1) * exp((Year.BC - 1950) / 8267)
+}
+
+#' @title Delta14C to F14C in BP
+#' @description Conversion de Delta14C en F14C pour une date en BP (cal BP)
+#' @param delta14C Delta 14C (‰)
+#' @param theta.calBP Date en années cal BP
+#' @return F14C corrigé pour une date BP
+#' @export
+delta14CtoF14C.inBP <- function(delta14C, theta.calBP) {
+  (delta14C / 1000 + 1) * exp(-theta.calBP / 8267)
+}
+
+#' @title F14C to Delta14C
+#' @description Conversion de F14C en Delta14C pour une année BC
+#' @param F14C Fraction moderne
+#' @param Year.BC Année en BC
+#' @return Delta14C (‰)
+#' @export
+F14CtoDelta14C <- function(F14C, Year.BC) {
+  (F14C / exp((Year.BC - 1950) / 8267) - 1) * 1000
+}
+
+#' @title Delta14C to CRA
+#' @description Conversion directe de Delta14C en CRA (âge radiocarbone)
+#' @param delta14C Delta 14C (‰)
+#' @param year.calBP Année en cal BP
+#' @return CRA (âge radiocarbone)
+#' @export
+delta14CtoCRA <- function(delta14C, year.calBP) {
+  -8033 * log((delta14C / 1000 + 1) * exp(-year.calBP / 8267))
+}
+

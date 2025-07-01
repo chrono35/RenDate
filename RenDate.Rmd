@@ -1,7 +1,7 @@
 ---
 title: "RenDate"
 author: "Ph Dufresne"
-date: "07/02/2020"
+date: "18/06/2024"
 output:
   
   pdf_document:
@@ -91,12 +91,12 @@ createCalCurve("IntCal20_AD", intCal20_AD$V1, intCal20_AD$V2, intCal20_AD$V3)
 createCalCurve("IntCal20_BP", intCal20_AD$V1, intCal20_AD$V2, intCal20_AD$V3)
 ```
 
-# Datation
+# Datation 
 ## Datation 14C
 ```{r Datation 14C}
 C14 <- 97
 errC14 <- 16
-date14C <- calibrate(mesures = C14 ,std = errC14, calCurves = 'IntCal13_AD', ids = 'C14', timeScale = 1)
+date14C <- calibrate(mesures = C14 ,std = errC14, calCurves = 'IntCal20_AD', ids = 'C14', timeScale = 1)
 
 # Tracé de la courbe 14C
  # réduction de la période
@@ -105,16 +105,16 @@ tmax <- 1950
 xlim <- c(tmin, tmax)
 
 # Il faut mettre des valeur qui existent dans le tableau
-imin <- which(intCal13_AD$V1 == tmin)
-imax <- which(intCal13_AD$V1 == tmax)
-ylim <- range(intCal13_AD$V2[imin:imax] )
+imin <- which(IntCal20_AD$V1 == tmin)
+imax <- which(IntCal20_AD$V1 == tmax)
+ylim <- range(IntCal20_AD$V2[imin:imax] )
 
 par( fig=c(0, 1, 0.50, 1), mar=c(0, 5, 0, 1))
 
-courbe_enveloppe(t=intCal13_AD$V1, mean=intCal13_AD$V2, intCal13_AD$V3, ylab = '14C', xlab = NA,  xaxt = "n",
+courbe_enveloppe(t = intCal13_AD$V1, mean = IntCal20_AD$V2, IntCal20_AD$V3, ylab = '14C', xlab = NA,  xaxt = "n",
                  xlim = xlim, ylim = ylim)
-mesure_enveloppe(intCal13_AD$V1, mesure = C14, std = errC14)
-text(intCal13_AD$V1[imin], C14, labels=as.character(C14) )
+mesure_enveloppe(IntCal20_AD$V1, mesure = C14, std = errC14)
+text(IntCal20_AD$V1[imin], C14, labels=as.character(C14) )
 
 par(fig=c(0, 1, 0.0, 0.50), new= TRUE, mar=c(5, 5, 0, 1) )
 
