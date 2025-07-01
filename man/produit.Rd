@@ -9,10 +9,17 @@ produit(date1, date2, timeScale = 1)
 produit(date1, date2, timeScale = 1)
 }
 \arguments{
+\item{date1}{Première densité de classe "RenDate"}
+
+\item{date2}{Deuxième densité de classe "RenDate"}
+
 \item{timeScale}{permet de modifier la grille de temps}
 }
+\value{
+Une nouvelle densité de classe "RenDate" représentant la combinaison des deux densités en entrée
+}
 \description{
-{Calcul la combinaison au sens produit de deux densités de class "RenDate"}
+Calcule la combinaison au sens produit de deux densités de classe "RenDate".
 
 {Calcul la combinaison au sens produit de deux densités de class "RenDate"}
 }

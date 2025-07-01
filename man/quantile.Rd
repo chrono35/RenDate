@@ -14,7 +14,7 @@ quantile(date, prob = c(0.25, 0.5, 0.75))
 \item{prob}{quantiles  default prob = c(0.25, 0.5, 0.75)}
 }
 \description{
-{Retourne le temps correspondant à la ou aux quantiles juste supérieures ou égale d'une densité de date.}
+Retourne le temps correspondant à la ou aux quantiles juste supérieures ou égale d'une densité de date.
 
 {Retourne le temps correspondant à la ou aux quantiles juste supérieures ou égale d'une densité de date.}
 }

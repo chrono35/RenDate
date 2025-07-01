@@ -12,6 +12,8 @@ pred_value(a, b, seed = NA)
 \item{a}{un vecteur, par exemple history plot provenant de ChronoModel}
 
 \item{b}{un vecteur, par exemple history plot provenant de ChronoModel}
+
+\item{seed}{grain de l'échantillonneur pseudo-aléatoire}
 }
 \value{
 un vecteur

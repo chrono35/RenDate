@@ -16,9 +16,9 @@ wiggle_uniform(x, wiggle.min, wiggle.max)
 \item{wiggle.max}{la borne supérieure du décalage}
 }
 \description{
-{Calcul le wiggle (décalage) d'une densité de class "RenDate"
+Calcul le wiggle (décalage) d'une densité de class "RenDate"
 Fonction utilisée avec produit.RenDate() pour calculer le "Wiggle Matching"
-Il s'agit d'un poroduit de convolution de la datation par une "fonction porte"}
+Il s'agit d'un poroduit de convolution de la datation par une "fonction porte"
 
 {Calcul le wiggle (décalage) d'une densité de class "RenDate"
 Fonction utilisée avec produit.RenDate() pour calculer le "Wiggle Matching"

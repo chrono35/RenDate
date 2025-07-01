@@ -42,7 +42,7 @@ plot_gaussian_measure(
 \item{normalized}{force la densité à avoir un maximum à 1 * size, sinon c'est la surface qui est égale à 1}
 }
 \description{
-{Trace verticalement une mesure gaussienne.}
+Trace verticalement une mesure gaussienne.
 
 {Trace verticalement une mesure gaussienne.}
 }

@@ -12,7 +12,7 @@ map(date)
 \item{date}{densité de date de class "RenDate"}
 }
 \description{
-{Retourne le temps correspondant au maximum d'une densité de date}
+Retourne le temps correspondant au maximum d'une densité de date
 
 {Retourne le temps correspondant au maximum d'une densité de date}
 }

@@ -8,7 +8,6 @@
 
 #  A copy of the License is available at
 #  http://www.r-project.org/Licenses/
-#  _________________________________________________________________________________
 
 # Version 2025-07-01
 #
@@ -22,23 +21,26 @@
 #' @importFrom stats convolve density dunif runif sd
 #' @importFrom utils read.table setTxtProgressBar txtProgressBar
 
-
-#' 
 #' @title createCalCurve
-#' @description {Stocke une courbe dans le répertoire / data
-#' Cette fonction est utilisée avec la fonction calibrate.
-#' Inspiré du package Bchron (https://cran.r-project.org/web/packages/Bchron/index.html) développé par Andrew Parnell <Andrew.Parnell at mu.ie>, 
-#' ( Haslett J, Parnell AC (2008). “A simple monotone process with application to radiocarbon-dated depth chronologies.” 
-#' Journal of the Royal Statistical Society: Series C (Applied Statistics), 57(4), 399–418.
-#'  https://onlinelibrary.wiley.com/doi/10.1111/j.1467-9876.2008.00623.x/full. )
-#' est modifié pour pouvoir l'utiliser avec des mesures magnétiques, ou d'autres sortes de mesures nécessitants des valeurs décimales}
+#' @description 
+#' Stocke une courbe de calibration dans le répertoire /data.
+#' Cette fonction est utilisée avec la fonction `calibrate_uniform`.
+#' 
+#' Elle s'inspire du package Bchron (https://cran.r-project.org/web/packages/Bchron/index.html) développé par Andrew Parnell <Andrew.Parnell at mu.ie>, 
+#' et du travail de Haslett et Parnell (2008) ("A simple monotone process with application to radiocarbon-dated depth chronologies", 
+#' Journal of the Royal Statistical Society: Series C (Applied Statistics), 57(4), 399–418).
+#' 
+#' Cette fonction a été modifiée pour pouvoir l'utiliser avec des mesures magnétiques ou d'autres types de mesures nécessitant des valeurs décimales.
+#' 
+#' @param name Nom de la courbe de calibration à enregistrer
+#' @param cal_ages Vecteur des âges calibrés
+#' @param uncal_ages Vecteur des âges non calibrés
+#' @param one_sigma Vecteur des incertitudes à 1 sigma (optionnel, par défaut 0 pour chaque valeur)
+#' @param pathToCalCurves Chemin vers le répertoire où enregistrer la courbe de calibration (par défaut le sous-répertoire 'data' du répertoire de travail)
 #' @seealso \cite{\code{calibrate} }
+#' @seealso \code{\link{calibrate_uniform}}
 #' @export
-createCalCurve = function(name,
-                          cal_ages,
-                          uncal_ages,
-                          one_sigma=rep(0,length(cal_ages)),
-                          pathToCalCurves = paste0(getwd(),'/','data') )
+createCalCurve = function(name, cal_ages, uncal_ages, one_sigma = rep(0,length(cal_ages)), pathToCalCurves = paste0(getwd(), '/', 'data') )
 {
   
   # This function creates a calibration curve and puts it in the appropriate place for future use with Bchron
@@ -60,9 +62,13 @@ createCalCurve = function(name,
 
 
 #' @title calibrate
-#' @description {Fonction qui permet le calcul de la densité de probabilté d'une date}
+#' @description Fonction qui permet le calcul de la densité de probabilté d'une date
 #' @param mesures mesure ou liste des mesures à calibrer
 #' @param std erreur ou liste des erreurs sur les mesures à calibrer
+#' @param calCurves Le nom d'une courbe de calibration qui est dans le répertoire data
+#' @param ids un index 
+#' @param positions une position en hauteur sur un graphe avec plusieurs dates
+#' @param pathToCalCurves chemin d'acces aux fichiers de calibrations
 #' @param timeScale pas de la grille de temps
 #' @export
 calibrate <- function (mesures, std, calCurves, ids = NULL, positions = NULL,   pathToCalCurves = paste0(getwd(),'/','data'),  timeScale = 1  ) 
@@ -136,9 +142,13 @@ calibrate <- function (mesures, std, calCurves, ids = NULL, positions = NULL,   
 }
 
 #' @title calibrate_uniform
-#' @description {Fonction qui permet le calcul de la densité de probabilté d'une date, à partir d'une mesure avec une densité de probabilité uniforme}
+#' @description Fonction qui permet le calcul de la densité de probabilté d'une date, à partir d'une mesure avec une densité de probabilité uniforme
 #' @param measure.min valeur basse de mesure ou liste des mesures à calibrer
 #' @param measure.max valeur haute de mesure ou liste des valeurs à calibrer
+#' @param calCurves Le nom d'une courbe de calibration qui est dans le répertoire data
+#' @param ids un index 
+#' @param positions une position en hauteur sur un graphe avec plusieurs dates
+#' @param pathToCalCurves chemin d'acces aux fichiers de calibrations
 #' @param timeScale pas de la grille de temps
 #' @export
 calibrate_uniform <- function (measure.min, measure.max, calCurves, ids = NULL, positions = NULL, 
@@ -146,18 +156,18 @@ calibrate_uniform <- function (measure.min, measure.max, calCurves, ids = NULL, 
 {
   # Vérifications des paramètres d'entrée
   if (length(measure.min) != length(measure.max)) 
-    stop("tmin and tmax should be of same length")
+    stop("measure.min and measure.max should be of same length")
   if (length(measure.min) != length(calCurves)) 
-    stop("tmin and calCurves should be of same length")
+    stop("measure.min and calCurves should be of same length")
   if (!is.null(positions)) 
     if (length(measure.min) != length(positions)) 
-      stop("tmin and positions should be of same length")
+      stop("measure.min and positions should be of same length")
   if (is.null(ids)) 
     ids = paste("Date", 1:length(measure.min), sep = "")
   
-  # Vérification que tmin < tmax pour chaque mesure
+  # Vérification que measure.min < measure.max pour chaque mesure
   if (any(measure.min >= measure.max))
-    stop("All tmin values must be strictly less than corresponding tmax values")
+    stop("All measure.min values must be strictly less than corresponding measure.max values")
   
   allCalCurves = unique(calCurves)
   calCurve = calTime = calValue = calStd = timeGrid = mu = tau1 = list()
@@ -194,8 +204,8 @@ calibrate_uniform <- function (measure.min, measure.max, calCurves, ids = NULL, 
   out = list()
   
   # Calibration pour chaque mesure uniforme
-  for (i in 1:length(tmin)) {
-    # Vérification que l'intervalle [tmin, tmax] chevauche avec la courbe de calibration
+  for (i in 1:length(measure.min)) {
+    # Vérification que l'intervalle [measure.min, measure.max] chevauche avec la courbe de calibration
     cal_range = range(mu[[matchCalCurves[i]]])
     if (measure.max[i] < cal_range[1] | measure.min[i] > cal_range[2]) {
       warning(paste("Date", ids[i], "outside of calibration range. Range of", 
@@ -211,8 +221,8 @@ calibrate_uniform <- function (measure.min, measure.max, calCurves, ids = NULL, 
       mu_val = mu[[matchCalCurves[i]]][j]  # valeur moyenne de la courbe de calibration
       sigma_cal = tau1[[matchCalCurves[i]]][j]  # incertitude de la courbe de calibration
       
-      # Pour une mesure uniforme entre tmin et tmax, on calcule l'intégrale
-      # de la densité gaussienne de la courbe de calibration sur [tmin, tmax]
+      # Pour une mesure uniforme entre measure.min et measure.max, on calcule l'intégrale
+      # de la densité gaussienne de la courbe de calibration sur [measure.min, measure.max]
       if (sigma_cal > 0) {
         # Intégrale de la gaussienne N(mu_val, sigma_cal²) sur [measure.min[i], measure.max[i]]
         p_lower = stats::pnorm(measure.min[i], mean = mu_val, sd = sigma_cal)
@@ -349,10 +359,11 @@ approx_uncalibrate <- function(calibrated_result, grid_size = 100,
 #' @description {Fonction qui permet le calcul de la densité de probabilté de date uniforme - fonction porte}
 #' @param gate.min début de la porte
 #' @param gate.max fin de la porte
-#' @param timeGrid.min valeur minimale de la grille
-#' @param timeGrid.max valeur minimale de la grille
-#' @param timeScale pas de la grille de temps
+#' @param time.grid.min valeur minimale de la grille
+#' @param time.grid.max valeur minimale de la grille
+#' @param time.grid.scale pas de la grille de temps
 #' @param ids nom ou identifiant
+#' @param positions une position en hauteur sur un graphe avec plusieurs dates
 #' @export
 date_uniform <- function( gate.min = -0, gate.max = 100, time.grid.min = -1000, time.grid.max = 2000, time.grid.scale = 1, ids = NULL, position = NULL)
 {
@@ -374,10 +385,11 @@ date_uniform <- function( gate.min = -0, gate.max = 100, time.grid.min = -1000, 
 #' Fonction qui permet le calcul de la densité de probabilté de date gaussienne - fonction gauss
 #' @param mean moyenne
 #' @param sd standard deviations
-#' @param timeGrid.min valeur minimale de la grille
-#' @param timeGrid.max valeur minimale de la grille
-#' @param timeScale pas de la grille de temps
+#' @param time.grid.min valeur minimale de la grille
+#' @param time.grid.max valeur minimale de la grille
+#' @param time.grid.scale pas de la grille de temps
 #' @param ids nom ou identifiant
+#' @param positions une position en hauteur sur un graphe avec plusieurs dates
 #' @export
 date_gaussian <- function( mean = 0, sd = 10, time.grid.min = -1000, time.grid.max = 2000, time.grid.scale = 1, ids = NULL, position = NULL)
 {
@@ -400,12 +412,12 @@ date_gaussian <- function( mean = 0, sd = 10, time.grid.min = -1000, time.grid.m
 # HPD ----
 
 #' @title hpd
-#' @description {Calcul le hpd (hdr) sur une densité de probabilité de date}
+#' @description Calcul le hpd (hdr) sur une densité de probabilité de date
 #' @param date densité produite par la fonction calibrate, générant un objet de class "RenDate" 
 #' @param prob requested surface value [0, 1]
 #' @export
-setGeneric("hpd", package = "RenDate", valueClass = "list",
- function(date, prob = 0.95) {
+ setGeneric("hpd", package = "RenDate", valueClass = "list", function(date, prob = 0.95) 
+ {
   
   # A function to return the HPD interval for a date object which should have an timeGrid and a densities argument
   # I was previously using the hdrcde package but this has several unnecessary dependencies
@@ -452,7 +464,7 @@ setGeneric("hpd", package = "RenDate", valueClass = "list",
 
 ## map ----
 #' @title map
-#' @description {Retourne le temps correspondant au maximum d'une densité de date}
+#' @description Retourne le temps correspondant au maximum d'une densité de date
 #' @param date densité de date de class "RenDate" 
 #' @examples  g_dat <- date_gaussian( mean = 20, sd = 3, time.grid.scale = .5)
 #' @examples  'max(g_dat$`N(20;3)`))'
@@ -465,7 +477,7 @@ map<-function(date)
 ## quantile ----
 
 #' @title quantile
-#' @description {Retourne le temps correspondant à la ou aux quantiles juste supérieures ou égale d'une densité de date.}
+#' @description Retourne le temps correspondant à la ou aux quantiles juste supérieures ou égale d'une densité de date.
 #' @param date densité de date de class "RenDate" 
 #' @param  prob quantiles  default prob = c(0.25, 0.5, 0.75)
 #' @examples  'g_dat <- date_gaussian( mean = 20, sd = 3, time.grid.scale = .5)'
@@ -496,10 +508,17 @@ function(date, prob = c(0.25, 0.5, 0.75))
 # PLOT ----
 
 #' @title plot
-#' @description {Trace des courbe de densité.}
-#' @param withHDR Calcul le hdr (hpd) et remplie la surface correspondant
-#' @param dateHeigth Fixe la hauteur des densités, quand withPositions est TRUE
-#' @param normalize force le maximum à la valeur 1
+#' @description Trace des courbe de densité.
+#' @param x Objet de classe "RenDate" ou liste d'objets de classe "RenDate" à tracer
+#' @param withPositions Si TRUE, les courbes sont tracées en fonction de la position (profondeur) plutôt que de la densité
+#' @param pause Si TRUE, une pause est effectuée entre le tracé de chaque courbe (pour les listes d'objets "RenDate")
+#' @param dateHeight Hauteur des barres représentant les dates calibrées (lorsque withPositions = TRUE)
+#' @param normalize Si TRUE, les densités sont normalisées à 1
+#' @param borderCol Couleur de la bordure des barres (lorsque withPositions = TRUE)
+#' @param fillCols Couleurs de remplissage des barres (lorsque withPositions = TRUE)
+#' @param withHDR Si TRUE, les régions de plus haute densité (HDR) sont tracées
+#' @param hdrCol Couleur de remplissage des régions HDR
+#' @param ... Paramètres supplémentaires passés à la fonction `lines`
 #' @export
 plot.RenDate <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 30, normalize= FALSE, borderCol = NULL,
                          fillCols = rep('gray', length(x)), withHDR = TRUE, hdrCol = 'darkgray',
@@ -614,8 +633,17 @@ plot.RenDate <- function(x, withPositions = FALSE, pause = FALSE, dateHeight = 3
 
 
 #' @title lines
-#' @description {Trace des courbes de densité avec leurs enveloppes d erreur.}
-#' @param withHDR Calcul le hdr (hdp) et remplie la surface correspondant
+#' @description Trace des courbes de densité avec leurs enveloppes d'erreur.
+#' @param x Objet de classe "RenDate" ou liste d'objets de classe "RenDate" à tracer
+#' @param withPositions Si TRUE, les courbes sont tracées en fonction de la position (profondeur) plutôt que de la densité
+#' @param pause Si TRUE, une pause est effectuée entre le tracé de chaque courbe (pour les listes d'objets "RenDate")
+#' @param dateHeight Hauteur des barres représentant les dates calibrées (lorsque withPositions = TRUE)
+#' @param normalize Si TRUE, les densités sont normalisées à 1
+#' @param borderCol Couleur de la bordure des barres (lorsque withPositions = TRUE)
+#' @param fillCols Couleurs de remplissage des barres (lorsque withPositions = TRUE)
+#' @param withHDR Si TRUE, les régions de plus haute densité (HDR) sont tracées
+#' @param hdrCol Couleur de remplissage des régions HDR
+#' @param ... Paramètres supplémentaires passés à la fonction `lines`
 #' @export
 lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, normalize = FALSE, borderCol = NULL,
                           fillCols = rep('gray', length(x)), withHDR = TRUE, hdrCol = 'darkgray', 
@@ -730,18 +758,19 @@ lines.RenDate <- function(x, withPositions=FALSE, pause=FALSE, dateHeight = 30, 
     
 }
 
-#' @title courbe_enveloppe / curve_envelope
+#' @title courbe_enveloppe
 #' @description Trace une courbe moyenne avec son enveloppe d'erreur à ±1 sigma et ±2.54 sigma.
 #' @param t Vecteur des temps
 #' @param mean Vecteur des moyennes
 #' @param std Vecteur des erreurs standards (écarts-types)
+
 #' @param k facteur multiplacteur e = k * sigma pour la 2ème enveloppe, par défaut k = 2.54 (soit 99 % de confiance)
 #' @param col.env Couleur de l'enveloppe d'erreur (défaut : "forestgreen")
 #' @param xlim Limites de l'axe des x (optionnel)
 #' @param ylim Limites de l'axe des y (optionnel)
 #' @param new Si `TRUE`, crée un nouveau graphique ; sinon ajoute au graphique courant
 #' @param ... Arguments additionnels passés à `plot` ou `lines`
-#
+
 #'#' @details
 #' Cette fonction trace une courbe moyenne ainsi que deux enveloppes d'incertitude :
 #' 
@@ -814,7 +843,7 @@ envelope_measure <- mesure_enveloppe
 
 
 #' @title plot_gaussian_measure
-#' @description {Trace verticalement une mesure gaussienne.}
+#' @description Trace verticalement une mesure gaussienne.
 #' @param mean valeur moyenne de la gaussienne
 #' @param sd ecart type
 #' @param k facteur fixe la distance à la moyenne du dessin min = mean - k*sd, et max = mean + k*sd
@@ -839,7 +868,7 @@ plot_gaussian_measure <- function(mean = 0, sd = 1, k = 5,  x.min = 0, size = 10
 
 
 #' @title plot_square_measure
-#' @description {Trace verticalement une mesure rectangulaire. porte}
+#' @description Trace verticalement une mesure rectangulaire. porte
 #' @param min valeur basse de la mesure
 #' @param max valeur haute de la mesure
 #' @param size taille horizontal de la gaussienne en unité du graph
@@ -866,9 +895,13 @@ plot_square_measure <- function(min = 50, max = 100,   x.min = 0, size = 10,  co
 
 
 #  Produit ----
+
 #' @title produit
-#' @description {Calcul la combinaison au sens produit de deux densités de class "RenDate"}
-#' @param timeScale permet de modifier la grille de temps
+#' @description Calcule la combinaison au sens produit de deux densités de classe "RenDate".
+#' @param date1 Première densité de classe "RenDate"
+#' @param date2 Deuxième densité de classe "RenDate"
+#' @param timeScale Permet de modifier la grille de temps (pas de la grille)
+#' @return Une nouvelle densité de classe "RenDate" représentant la combinaison des deux densités en entrée
 #' @export
 setGeneric("produit", package = "RenDate",
   function(date1, date2, timeScale = 1) {
@@ -948,9 +981,9 @@ wiggle_indice <- function(f, imin, imax)
 }
 
 #' @title wiggle_uniform
-#' @description {Calcul le wiggle (décalage) d'une densité de class "RenDate"
+#' @description Calcul le wiggle (décalage) d'une densité de class "RenDate"
 #' Fonction utilisée avec produit.RenDate() pour calculer le "Wiggle Matching"
-#' Il s'agit d'un poroduit de convolution de la datation par une "fonction porte"}
+#' Il s'agit d'un poroduit de convolution de la datation par une "fonction porte"
 #' @param x une densité (datation) de class "RenDate"
 #' @param wiggle.min la borne inférieure du décalage
 #' @param wiggle.max la borne supérieure du décalage
@@ -1143,10 +1176,19 @@ read_ref <- function(file.Ref, encoding = "macroman")
 
 #' @title trace_to_date
 #' @description
-#'  Conversion d'une trace (un vecteur de valeurs) en densité datation pour utilisation avec les autres fonctions du package
-#' @param trace  un vecteur history plot provenant de ChronoModel
-#' @param bw bandwidth
-#' @return une date par lissage avec un noyaux, gaussien par defaut
+#'  Convertit une trace (un vecteur de valeurs) en une densité de datation pour utilisation avec les autres fonctions du package.
+#'  
+#'  La densité est calculée en utilisant un lissage par noyau, avec un noyau gaussien par défaut.
+#' @param trace Un vecteur représentant l'historique (trace) provenant de ChronoModel
+#' @param bw Largeur de bande (bandwidth) pour le lissage. Si "bw = 'CM'", la largeur de bande est calculée avec la formule $h = 1.06 \times \sigma \times n^{-1/5}$, où $\sigma$ est l'écart-type de la trace et $n$ la longueur de la trace.
+#' @param adjust Facteur d'ajustement pour la largeur de bande, identique au paramètre `adjust` de la fonction `density()`.
+#' @param from Valeur minimale de la grille de temps
+#' @param to Valeur maximale de la grille de temps
+#' @param gridLength Nombre de points sur la grille de temps
+#' @param kernel Type de noyau à utiliser pour le lissage (par défaut "nrd")
+#' @param ids Identifiants optionnels pour les différentes traces
+#' @param position Positions optionnelles associées aux traces
+#' @return Une liste de classe "RenDate" contenant la densité de datation calculée à partir de la trace en entrée.
 #' @export
 trace_to_date <- function( trace,  bw = "nrd", adjust = 1, from, to, gridLength = 1024,
                            kernel = c("gaussian"),
@@ -1155,10 +1197,10 @@ trace_to_date <- function( trace,  bw = "nrd", adjust = 1, from, to, gridLength 
   out = list()
   if (bw=="CM") {
     sigma <- sd(trace) # sans biais
-    bandwidth<-1.06
+    bandwidth <- 1.06
     bw <- bandwidth * sigma * length(trace)^ (-1./5.) # in CM = h
-    from <- min(trace) - 4. * h # in CM = a
-    to <- max(trace) + 4. * h # in CM = b
+    from <- min(trace) - 4.0 * sigma # in CM = a
+    to <- max(trace) + 4.0 * sigma # in CM = b
   } 
   dens  <- density(x=trace, bw = bw, adjust = adjust, kernel = kernel, from = from, to = to, n = gridLength)
   dens$y <- dens$y/sum(dens$y)
@@ -1180,6 +1222,7 @@ trace_to_date <- function( trace,  bw = "nrd", adjust = 1, from, to, gridLength 
 #' $$tc  =  Unif[tb; td]$$
 #' @param a  un vecteur, par exemple history plot provenant de ChronoModel
 #' @param b  un vecteur, par exemple history plot provenant de ChronoModel
+#' @param seed grain de l'échantillonneur pseudo-aléatoire
 #' @return un vecteur
 #' @export
 pred_value <- function(a, b, seed = NA) 

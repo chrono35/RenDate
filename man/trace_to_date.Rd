@@ -32,14 +32,30 @@ trace_to_date(
 \item{trace}{un vecteur history plot provenant de ChronoModel}
 
 \item{bw}{bandwidth}
+
+\item{adjust}{Facteur d'ajustement pour la largeur de bande, identique au paramètre `adjust` de la fonction `density()`.}
+
+\item{from}{Valeur minimale de la grille de temps}
+
+\item{to}{Valeur maximale de la grille de temps}
+
+\item{gridLength}{Nombre de points sur la grille de temps}
+
+\item{kernel}{Type de noyau à utiliser pour le lissage (par défaut "nrd")}
+
+\item{ids}{Identifiants optionnels pour les différentes traces}
+
+\item{position}{Positions optionnelles associées aux traces}
 }
 \value{
-une date par lissage avec un noyaux, gaussien par defaut
+Une liste de classe "RenDate" contenant la densité de datation calculée à partir de la trace en entrée.
 
 une date par lissage avec un noyaux, gaussien par defaut
 }
 \description{
-Conversion d'une trace (un vecteur de valeurs) en densité datation pour utilisation avec les autres fonctions du package
+Convertit une trace (un vecteur de valeurs) en une densité de datation pour utilisation avec les autres fonctions du package.
+ 
+ La densité est calculée en utilisant un lissage par noyau, avec un noyau gaussien par défaut.
 
 Conversion d'une trace (un vecteur de valeurs) en densité datation pour utilisation avec les autres fonctions du package
 }

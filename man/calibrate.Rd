@@ -29,10 +29,18 @@ calibrate(
 
 \item{std}{erreur ou liste des erreurs sur les mesures à calibrer}
 
+\item{calCurves}{Le nom d'une courbe de calibration qui est dans le répertoire data}
+
+\item{ids}{un index}
+
+\item{positions}{une position en hauteur sur un graphe avec plusieurs dates}
+
+\item{pathToCalCurves}{chemin d'acces aux fichiers de calibrations}
+
 \item{timeScale}{pas de la grille de temps}
 }
 \description{
-{Fonction qui permet le calcul de la densité de probabilté d'une date}
+Fonction qui permet le calcul de la densité de probabilté d'une date
 
 {Fonction qui permet le calcul de la densité de probabilté d'une date}
 }

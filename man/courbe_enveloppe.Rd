@@ -3,7 +3,7 @@
 \name{courbe_enveloppe}
 \alias{courbe_enveloppe}
 \alias{curve_envelope}
-\title{courbe_enveloppe / curve_envelope}
+\title{courbe_enveloppe}
 \usage{
 courbe_enveloppe(
   t,
@@ -70,7 +70,15 @@ curve_envelope(
 
 \item{new}{Si `TRUE`, crée un nouveau graphique ; sinon ajoute au graphique courant}
 
-\item{...}{Arguments additionnels passés à `plot` ou `lines`}
+\item{...}{Arguments additionnels passés à `plot` ou `lines`
+
+#' @details
+Cette fonction trace une courbe moyenne ainsi que deux enveloppes d'incertitude :
+
+- **±1 sigma** : Enveloppe étroite (semi-transparente).
+- **±k sigma** : Enveloppe plus large, par défaut k = 2.54 (environ 99 % de confiance).
+
+Elle est utile pour représenter visuellement une tendance et son incertitude dans le temps.}
 }
 \value{
 Un graphique est généré avec la courbe moyenne et ses enveloppes d'erreur.
@@ -81,7 +89,4 @@ Un graphique est généré avec la courbe moyenne et ses enveloppes d’erreur.
 Trace une courbe moyenne avec son enveloppe d'erreur à ±1 sigma et ±2.54 sigma.
 
 Trace une courbe moyenne avec son enveloppe d'erreur à ±1 sigma et ±2.54 sigma.
-}
-\details{
-
 }

@@ -21,14 +21,26 @@ createCalCurve(
   pathToCalCurves = paste0(getwd(), "/", "data")
 )
 }
+\arguments{
+\item{name}{Nom de la courbe de calibration à enregistrer}
+
+\item{cal_ages}{Vecteur des âges calibrés}
+
+\item{uncal_ages}{Vecteur des âges non calibrés}
+
+\item{one_sigma}{Vecteur des incertitudes à 1 sigma (optionnel, par défaut 0 pour chaque valeur)}
+
+\item{pathToCalCurves}{Chemin vers le répertoire où enregistrer la courbe de calibration (par défaut le sous-répertoire 'data' du répertoire de travail)}
+}
 \description{
-{Stocke une courbe dans le répertoire / data
-Cette fonction est utilisée avec la fonction calibrate.
-Inspiré du package Bchron (https://cran.r-project.org/web/packages/Bchron/index.html) développé par Andrew Parnell <Andrew.Parnell at mu.ie>, 
-( Haslett J, Parnell AC (2008). “A simple monotone process with application to radiocarbon-dated depth chronologies.” 
-Journal of the Royal Statistical Society: Series C (Applied Statistics), 57(4), 399–418.
- https://onlinelibrary.wiley.com/doi/10.1111/j.1467-9876.2008.00623.x/full. )
-est modifié pour pouvoir l'utiliser avec des mesures magnétiques, ou d'autres sortes de mesures nécessitants des valeurs décimales}
+Stocke une courbe de calibration dans le répertoire /data.
+Cette fonction est utilisée avec la fonction `calibrate_uniform`.
+
+Elle s'inspire du package Bchron (https://cran.r-project.org/web/packages/Bchron/index.html) développé par Andrew Parnell <Andrew.Parnell at mu.ie>, 
+et du travail de Haslett et Parnell (2008) ("A simple monotone process with application to radiocarbon-dated depth chronologies", 
+Journal of the Royal Statistical Society: Series C (Applied Statistics), 57(4), 399–418).
+
+Cette fonction a été modifiée pour pouvoir l'utiliser avec des mesures magnétiques ou d'autres types de mesures nécessitant des valeurs décimales.
 
 {Stocke une courbe dans le répertoire / data
 Cette fonction est utilisée avec la fonction calibrate.
@@ -40,6 +52,8 @@ est modifié pour pouvoir l'utiliser avec des mesures magnétiques, ou d'autres 
 }
 \seealso{
 \cite{\code{calibrate} }
+
+\code{\link{calibrate_uniform}}
 
 \cite{\code{calibrate} }
 }

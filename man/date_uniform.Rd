@@ -29,7 +29,15 @@ date_uniform(
 
 \item{gate.max}{fin de la porte}
 
+\item{time.grid.min}{valeur minimale de la grille}
+
+\item{time.grid.max}{valeur minimale de la grille}
+
+\item{time.grid.scale}{pas de la grille de temps}
+
 \item{ids}{nom ou identifiant}
+
+\item{positions}{une position en hauteur sur un graphe avec plusieurs dates}
 
 \item{timeGrid.min}{valeur minimale de la grille}
 

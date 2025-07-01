@@ -14,7 +14,7 @@ hpd(date, prob = 0.95)
 \item{prob}{requested surface value [0, 1]}
 }
 \description{
-{Calcul le hpd (hdr) sur une densité de probabilité de date}
+Calcul le hpd (hdr) sur une densité de probabilité de date
 
 {Calcul le hpd (hdr) sur une densité de probabilité de date}
 }

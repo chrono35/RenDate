@@ -29,10 +29,18 @@ calibrate_uniform(
 
 \item{measure.max}{valeur haute de mesure ou liste des valeurs à calibrer}
 
+\item{calCurves}{Le nom d'une courbe de calibration qui est dans le répertoire data}
+
+\item{ids}{un index}
+
+\item{positions}{une position en hauteur sur un graphe avec plusieurs dates}
+
+\item{pathToCalCurves}{chemin d'acces aux fichiers de calibrations}
+
 \item{timeScale}{pas de la grille de temps}
 }
 \description{
-{Fonction qui permet le calcul de la densité de probabilté d'une date, à partir d'une mesure avec une densité de probabilité uniforme}
+Fonction qui permet le calcul de la densité de probabilté d'une date, à partir d'une mesure avec une densité de probabilité uniforme
 
 {Fonction qui permet le calcul de la densité de probabilté d'une date, à partir d'une mesure avec une densité de probabilité uniforme}
 }

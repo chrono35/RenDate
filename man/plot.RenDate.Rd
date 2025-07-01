@@ -31,14 +31,30 @@
 )
 }
 \arguments{
+\item{x}{Objet de classe "RenDate" ou liste d'objets de classe "RenDate" à tracer}
+
+\item{withPositions}{Si TRUE, les courbes sont tracées en fonction de la position (profondeur) plutôt que de la densité}
+
+\item{pause}{Si TRUE, une pause est effectuée entre le tracé de chaque courbe (pour les listes d'objets "RenDate")}
+
+\item{dateHeight}{Hauteur des barres représentant les dates calibrées (lorsque withPositions = TRUE)}
+
 \item{normalize}{force le maximum à la valeur 1}
 
+\item{borderCol}{Couleur de la bordure des barres (lorsque withPositions = TRUE)}
+
+\item{fillCols}{Couleurs de remplissage des barres (lorsque withPositions = TRUE)}
+
 \item{withHDR}{Calcul le hdr (hpd) et remplie la surface correspondant}
+
+\item{hdrCol}{Couleur de remplissage des régions HDR}
+
+\item{...}{Paramètres supplémentaires passés à la fonction `lines`}
 
 \item{dateHeigth}{Fixe la hauteur des densités, quand withPositions est TRUE}
 }
 \description{
-{Trace des courbe de densité.}
+Trace des courbe de densité.
 
 {Trace des courbe de densité.}
 }
